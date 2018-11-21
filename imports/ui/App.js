@@ -41,11 +41,13 @@ class App extends Component {
         return filteredTasks.map((task) => {
             const currentUserId = this.props.currentUser && this.props.currentUser._id;
             const showPrivateButton = task.owner === currentUserId;
+            const userAuthorised = !!this.props.currentUser;
             
             return (<Task
                 key={task._id}
                 task={task}
                 showPrivateButton={showPrivateButton}
+                userAuthorised = {userAuthorised}
             />);
         });
     }

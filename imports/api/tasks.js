@@ -1,6 +1,7 @@
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
+
 import Task from '../ui/Task';
 
 export const Tasks = new Mongo.Collection('tasks');
@@ -30,6 +31,7 @@ Meteor.methods({
       createdAt: new Date(),
       owner: this.userId,
       username: Meteor.users.findOne(this.userId).username,
+      private: false,
     });
   },
   'tasks.remove'(taskId) {
