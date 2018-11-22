@@ -3,6 +3,7 @@ import { Random } from 'meteor/random';
 import { assert } from 'chai';
 
 import { Tasks } from '../imports/api/tasks.js';
+import { check } from 'meteor/check';
 
 
 describe("simple-todos", function () {
@@ -24,19 +25,19 @@ describe("simple-todos", function () {
           taskId = Tasks.insert({
             text: 'test task',
             createdAt: new Date(),
-            owner: userId2,
+            owner: userId,
             private: true,
             username: 'tmeasday',
           });
-         
+
 
         });
 
         it('can delete owned private task', () => {
-          const deleteTask = Meteor.server.method_handlers['tasks.remove'];
+          const removeTask = Meteor.server.method_handlers['tasks.remove'];
           const invocation = { userId };
-          
-          deleteTask.apply(invocation, [taskId]);
+
+          removeTask.apply(invocation, [taskId]);
           assert.equal(Tasks.find().count(), 0);
         });
 

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
 import { Tasks } from '../api/tasks.js';
 import Task from './Task.js';
@@ -21,9 +22,18 @@ class App extends Component {
 
         // Find the text field via the React ref
         const text = ReactDOM.findDOMNode(this.refs.textInput).value.trim();
+        const dueDate = findDate(text);
 
-        Meteor.call('tasks.insert', text);
+        let sendInsert = true;
 
+        if (dueDate !== null && dueDate.text === '') {
+            sendInsert = false;
+            alert('Only due date in task text');
+        }
+
+        if (text === '') sendInsert = false;
+
+        if (sendInsert) Meteor.call('tasks.insert', text);
         // Clear form
         ReactDOM.findDOMNode(this.refs.textInput).value = '';
     }
@@ -37,21 +47,20 @@ class App extends Component {
         if (this.state.hideCompleted) {
             filteredTasks = filteredTasks.filter(task => !task.checked);
         }
-      
+
         return filteredTasks.map((task) => {
             const currentUserId = this.props.currentUser && this.props.currentUser._id;
             const showPrivateButton = task.owner === currentUserId;
             const userAuthorised = !!this.props.currentUser;
-            
+
             return (<Task
                 key={task._id}
                 task={task}
                 showPrivateButton={showPrivateButton}
-                userAuthorised = {userAuthorised}
+                userAuthorised={userAuthorised}
             />);
         });
     }
- 
 
     render() {
         return (
@@ -68,8 +77,9 @@ class App extends Component {
                     />
                     Hide Completed Tasks
                 </label>
-               
+
                 <AccountsUIWrapper />
+
                 {this.props.currentUser ?
                     <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
                         <input
@@ -80,7 +90,12 @@ class App extends Component {
                     </form> : ''
                 }
                 <ul>
-                    {this.renderTasks()}
+                    <ReactCSSTransitionGroup
+                        transitionName="example"
+                        transitionEnterTimeout={500}
+                        transitionLeaveTimeout={300}>
+                        {this.renderTasks()}
+                    </ReactCSSTransitionGroup>
                 </ul>
             </div>
         );
@@ -92,6 +107,5 @@ export default withTracker(() => {
         tasks: Tasks.find({}, { sort: { createdAt: -1 } }).fetch(),
         incompleteCount: Tasks.find({ checked: { $ne: true } }).count(),
         currentUser: Meteor.user(),
-        
     };
 })(App);
