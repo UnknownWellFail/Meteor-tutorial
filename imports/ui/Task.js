@@ -48,7 +48,6 @@ class Task extends Component {
             disabled={!!this.props.task.disabled}
             checked={!!this.props.task.googleEventId}
             onClick={this.addToGoogleCalendar.bind(this)}
-            ref="GTaskCheckbox"
           />
         ) : ''}
 
