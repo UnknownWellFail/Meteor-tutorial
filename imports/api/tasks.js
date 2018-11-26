@@ -8,7 +8,6 @@ import findDate from './dueDates'
 export const Tasks = new Mongo.Collection('tasks');
 
 if (Meteor.isServer) {
-
   Meteor.publish('tasks', function tasksPublconsication() {
     return Tasks.find(
       {
@@ -108,12 +107,17 @@ if (Meteor.isServer) {
       if (task === null) {
         throw new Meteor.Error('Task not found');
       }
+      
       if (task.disabled) {
         throw new Meteor.Error('Sending request now');
       }
       const usr = Meteor.users.findOne(this.userId);
 
       if (!this.userId || !usr) {
+        throw new Meteor.Error('Not authorized');
+      }
+
+      if (task.owner !== this.userId) {
         throw new Meteor.Error('Not authorized');
       }
 
@@ -157,12 +161,18 @@ if (Meteor.isServer) {
       if (task === null) {
         throw new Meteor.Error('Task not found');
       }
+
       if (task.disabled) {
         throw new Meteor.Error('Sending request now');
       }
+
       const usr = Meteor.users.findOne(this.userId);
 
       if (!this.userId || !usr) {
+        throw new Meteor.Error('Not authorized');
+      }
+
+      if (task.owner !== this.userId) {
         throw new Meteor.Error('Not authorized');
       }
 

@@ -54,8 +54,8 @@ class App extends Component {
             const currentUserId = user && user._id;
             const showPrivateButton = task.owner === currentUserId;
             const userAuthorised = !!user;
-            const googleUser = user && user.services && user.services.google;
-             
+            const googleUser = user && user.services && user.services.google && task.owner === user._id;
+
             return (<Task
                 key={task._id}
                 task={task}
