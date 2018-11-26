@@ -10,16 +10,13 @@ if (Meteor.isServer) {
     }
     return user;
   });
-  Meteor.publish(null, function () {
-    if (this.userId) {
-      const projection = {
-        'services.google.id': 1
-      };
-      return Meteor.users.find(
-        { _id: this.userId },
-        { fields: projection } );
-    } else {
-      return null;
-    }
+  Meteor.publish('users.me', function () {
+    if (!this.userId) return this.ready();
+    const projection = {
+      'services.google.id': 1
+    };
+    return Meteor.users.find(
+      { _id: this.userId },
+      { fields: projection });
   });
 }

@@ -54,7 +54,7 @@ class App extends Component {
             const currentUserId = user && user._id;
             const showPrivateButton = task.owner === currentUserId;
             const userAuthorised = !!user;
-            const googleUser = user && user.services && user.services.google && task.owner === user._id;
+            const googleUser = user && user.services && user.services.google && task.owner === user._id && task.dueDate;
 
             return (<Task
                 key={task._id}
@@ -108,6 +108,7 @@ class App extends Component {
 
 export default withTracker(() => {
     Meteor.subscribe('tasks');
+    Meteor.subscribe('users.me');
     return {
         tasks: Tasks.find({}, { sort: { createdAt: -1 } }).fetch(),
         incompleteCount: Tasks.find({ checked: { $ne: true } }).count(),
