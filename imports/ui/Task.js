@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import { Meteor } from 'meteor/meteor';
 import classnames from 'classnames';
 
@@ -20,8 +19,16 @@ class Task extends Component {
   }
 
   addToGoogleCalendar() {
-    if (!this.props.task.inGoogle) Meteor.call('tasks.addToGoogleCalendar', this.props.task._id);
-    else Meteor.call('tasks.removeFromGoogleCalendar', this.props.task._id);
+    if (!!!this.props.task.googleEventId) {
+      Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, (error, response) => {
+        console.log(error);
+      });
+    }
+    else {
+      Meteor.call('tasks.removeFromGoogleCalendar', this.props.task._id, (error, response) => {
+        console.log(error);
+      });
+    }
   }
 
   render() {
@@ -30,7 +37,6 @@ class Task extends Component {
     const taskClassName = classnames({
       checked: this.props.task.checked,
       private: this.props.task.private,
-      inGoogle: this.props.task.inGoogle,
     });
 
     return (
@@ -40,7 +46,7 @@ class Task extends Component {
             type="checkbox"
             readOnly
             disabled={!!this.props.task.disabled}
-            checked={!!this.props.task.inGoogle}
+            checked={!!this.props.task.googleEventId}
             onClick={this.addToGoogleCalendar.bind(this)}
             ref="GTaskCheckbox"
           />
