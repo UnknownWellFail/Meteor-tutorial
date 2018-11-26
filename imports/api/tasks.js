@@ -43,7 +43,6 @@ if (Meteor.isServer) {
         owner: this.userId,
         username: Meteor.users.findOne(this.userId).username,
         private: false,
-        inGoogle: false,
         dueDate: dueDate && { start: dueDate.date.start, end: dueDate.date.end },
       });
     },
@@ -107,13 +106,13 @@ if (Meteor.isServer) {
       if (task === null) {
         throw new Meteor.Error('Task not found');
       }
-      
+
       if (task.disabled) {
         throw new Meteor.Error('Sending request now');
       }
-      const usr = Meteor.users.findOne(this.userId);
+      const user = Meteor.users.findOne(this.userId);
 
-      if (!this.userId || !usr) {
+      if (!this.userId || !user) {
         throw new Meteor.Error('Not authorized');
       }
 
@@ -121,7 +120,7 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Not authorized');
       }
 
-      if (!usr.services || !usr.services.google) {
+      if (!user.services || !user.services.google) {
         throw new Meteor.Error('Only google authorized');
       }
 
@@ -129,7 +128,7 @@ if (Meteor.isServer) {
 
       const dataObject = {
         headers: {
-          'Authorization': 'Bearer ' + usr.services.google.accessToken,
+          'Authorization': 'Bearer ' + user.services.google.accessToken,
           'Content-Type': 'application/json'
         },
         data: {
@@ -142,16 +141,18 @@ if (Meteor.isServer) {
           }
         }
       };
-
-      HTTP.post('https://www.googleapis.com/calendar/v3/calendars/primary/events', dataObject, (error, result) => {
-        if (error) {
-          console.log('err', error);
-        }
-        if (result) {
-          Tasks.update(taskId, { $set: { GTaskId: result.data.id, inGoogle: true, disabled: false } });
-        }
+      return new Promise((resolve, reject) => {
+        HTTP.post('https://www.googleapis.com/calendar/v3/calendars/primary/events', dataObject, (error, result) => {
+          if (error) {
+            reject(error.text);
+            Tasks.update(taskId, { $set: { disabled: false } });
+          }
+          if (result) {
+            resolve();
+            Tasks.update(taskId, { $set: { googleEventId: result.data.id, disabled: false } });
+          }
+        });
       });
-
     },
     'tasks.removeFromGoogleCalendar'(taskId) {
       check(taskId, String);
@@ -166,9 +167,9 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Sending request now');
       }
 
-      const usr = Meteor.users.findOne(this.userId);
+      const user = Meteor.users.findOne(this.userId);
 
-      if (!this.userId || !usr) {
+      if (!this.userId || !user) {
         throw new Meteor.Error('Not authorized');
       }
 
@@ -176,11 +177,11 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Not authorized');
       }
 
-      if (!usr.services || !usr.services.google) {
+      if (!user.services || !user.services.google) {
         throw new Meteor.Error('Only google authorized');
       }
 
-      if (!task.GTaskId) {
+      if (!task.googleEventId) {
         throw new Meteor.Error('Task is not in google calendar');
       }
 
@@ -188,25 +189,20 @@ if (Meteor.isServer) {
 
       const dataObject = {
         headers: {
-          'Authorization': 'Bearer ' + usr.services.google.accessToken,
+          'Authorization': 'Bearer ' + user.services.google.accessToken,
           'Content-Type': 'application/json'
         },
       }
 
-
-      HTTP.del('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.GTaskId, dataObject, (error, result) => {
-        if (error) {
-          console.log('err', error);
-        }
-        if (result) {
-          Tasks.update(taskId, {
-            $unset: { GTaskId: "", inGoogle: "" },
+      return new Promise((resolve,reject)=>{
+        HTTP.del('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.googleEventId, dataObject, (error, result) => {
+        if(error) reject(error.text);  
+        Tasks.update(taskId, {
+            $unset: { googleEventId: ""},
             $set: { disabled: false }
           });
-        }
+        });
       });
-
-
     },
   });
 }
