@@ -17,7 +17,7 @@ const clearLine = (text) => {
   return text;
 };
 const textComponents = [
-  'в', 'на', 'к'
+  'в', 'на', 'к', 'с'
 ];
 
 const dateWords = [
@@ -54,8 +54,7 @@ const findTime = (text) => {
   const minutes = time.split(':')[1];
   const date = new Date();
 
-  date.setHours(hours);
-  date.setMinutes(minutes);
+  date.setHours(hours, minutes);
 
   return { text: text.replace(time, ''), date: date };
 };

@@ -10,13 +10,13 @@ import AccountsUIWrapper from './AccountsUIWrapper.js';
 
 // App component - represents the whole app1
 class App extends Component {
-
     constructor(props) {
         super(props);
         this.state = {
             hideCompleted: false
         };
     }
+
     handleSubmit(event) {
         event.preventDefault();
 
@@ -37,6 +37,7 @@ class App extends Component {
         // Clear form
         ReactDOM.findDOMNode(this.refs.textInput).value = '';
     }
+
     toggleHideCompleted() {
         this.setState({
             hideCompleted: !this.state.hideCompleted,
@@ -49,15 +50,18 @@ class App extends Component {
         }
 
         return filteredTasks.map((task) => {
-            const currentUserId = this.props.currentUser && this.props.currentUser._id;
+            const user = this.props.currentUser;
+            const currentUserId = user && user._id;
             const showPrivateButton = task.owner === currentUserId;
-            const userAuthorised = !!this.props.currentUser;
-
+            const userAuthorised = !!user;
+            const googleUser = user && user.services && user.services.google;
+             
             return (<Task
                 key={task._id}
                 task={task}
                 showPrivateButton={showPrivateButton}
                 userAuthorised={userAuthorised}
+                googleUser={googleUser}
             />);
         });
     }
@@ -101,6 +105,7 @@ class App extends Component {
         );
     }
 }
+
 export default withTracker(() => {
     Meteor.subscribe('tasks');
     return {

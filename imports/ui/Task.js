@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 import { Meteor } from 'meteor/meteor';
 import classnames from 'classnames';
 
-import { Tasks } from '../api/tasks.js';
-
 // Task component - represents a single todo item
-export default class Task extends Component {
+class Task extends Component {
 
   toggleChecked() {
     // Set the checked property to the opposite of its current value
@@ -20,16 +19,33 @@ export default class Task extends Component {
     Meteor.call('tasks.setPrivate', this.props.task._id, !this.props.task.private);
   }
 
+  addToGoogleCalendar() {
+    if (!this.props.task.inGoogle) Meteor.call('tasks.addToGoogleCalendar', this.props.task._id);
+    else Meteor.call('tasks.removeFromGoogleCalendar', this.props.task._id);
+  }
+
   render() {
     // Give tasks a different className when they are checked off,
     // so that we can style them nicely in CSS
     const taskClassName = classnames({
       checked: this.props.task.checked,
       private: this.props.task.private,
+      inGoogle: this.props.task.inGoogle,
     });
 
     return (
       <li className={taskClassName}>
+        {this.props.userAuthorised && this.props.googleUser ? (
+          <input
+            type="checkbox"
+            readOnly
+            disabled={!!this.props.task.disabled}
+            checked={!!this.props.task.inGoogle}
+            onClick={this.addToGoogleCalendar.bind(this)}
+            ref="GTaskCheckbox"
+          />
+        ) : ''}
+
         {this.props.userAuthorised ? (
           <button className="delete" onClick={this.deleteThisTask.bind(this)}>
             &times;
@@ -50,7 +66,6 @@ export default class Task extends Component {
           </button>
         ) : ''}
 
-
         <span className="text">
           <strong>{this.props.task.username}</strong>: {this.props.task.text}
         </span>
@@ -59,3 +74,5 @@ export default class Task extends Component {
     );
   }
 }
+
+export default Task;

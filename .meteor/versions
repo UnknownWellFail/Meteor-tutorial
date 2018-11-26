@@ -1,4 +1,6 @@
 accounts-base@1.4.3
+accounts-google@1.3.2
+accounts-oauth@1.1.16
 accounts-password@1.5.1
 accounts-ui@1.3.1
 accounts-ui-unstyled@1.4.1
@@ -33,6 +35,8 @@ email@1.2.3
 es5-shim@4.8.0
 fetch@0.1.0
 geojson-utils@1.0.10
+google-config-ui@1.0.1
+google-oauth@1.2.6
 hot-code-push@1.0.4
 html-tools@1.0.11
 htmljs@1.0.11
@@ -66,6 +70,8 @@ mongo-dev-server@1.1.0
 mongo-id@1.0.7
 npm-bcrypt@0.9.3
 npm-mongo@3.1.1
+oauth@1.2.6
+oauth2@1.2.1
 observe-sequence@1.0.16
 ordered-dict@1.1.0
 promise@0.11.1
