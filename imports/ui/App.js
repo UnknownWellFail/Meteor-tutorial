@@ -7,14 +7,23 @@ import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import { Tasks } from '../api/tasks.js';
 import Task from './Task.js';
 import AccountsUIWrapper from './AccountsUIWrapper.js';
+import { Lists } from '../api/lists.js';
 
 // App component - represents the whole app1
 class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            hideCompleted: false
+            hideCompleted: false,
+            list: 'My Tasks'
         };
+    }
+
+    findListByName(name) {
+        const list = this.props.lists.find((list) => {
+            if (list.name === name) return list;
+        });
+        return list;
     }
 
     handleSubmit(event) {
@@ -33,7 +42,7 @@ class App extends Component {
 
         if (text === '') sendInsert = false;
 
-        if (sendInsert) Meteor.call('tasks.insert', text);
+        if (sendInsert) Meteor.call('tasks.insert', text, this.findListByName(this.state.list)._id);
         // Clear form
         ReactDOM.findDOMNode(this.refs.textInput).value = '';
     }
@@ -48,6 +57,9 @@ class App extends Component {
         if (this.state.hideCompleted) {
             filteredTasks = filteredTasks.filter(task => !task.checked);
         }
+        filteredTasks = filteredTasks.filter(task => {
+            if (this.state.list !== 'default') return task.listId === this.findListByName(this.state.list)._id;
+        });
 
         return filteredTasks.map((task) => {
             const user = this.props.currentUser;
@@ -66,12 +78,27 @@ class App extends Component {
         });
     }
 
+    handleChangeSelect() {
+        const list = ReactDOM.findDOMNode(this.refs.list).value;
+        this.setState({
+            list: list
+        });
+    }
+
     render() {
+        const options = this.props.lists.map((list) => {
+            return <option key={list._id}>{list.name}</option>;
+        });
         return (
             <div className="container">
+                <select ref='list' onChange={this.handleChangeSelect.bind(this)}>
+                    {options}
+                </select>
+
                 <header>
                     <h1>Todo List ({this.props.incompleteCount})</h1>
                 </header>
+
                 <label className="hide-completed">
                     <input
                         type="checkbox"
@@ -109,7 +136,9 @@ class App extends Component {
 export default withTracker(() => {
     Meteor.subscribe('tasks');
     Meteor.subscribe('users.me');
+    Meteor.subscribe('lists');
     return {
+        lists: Lists.find().fetch(),
         tasks: Tasks.find({}, { sort: { createdAt: -1 } }).fetch(),
         incompleteCount: Tasks.find({ checked: { $ne: true } }).count(),
         currentUser: Meteor.user(),

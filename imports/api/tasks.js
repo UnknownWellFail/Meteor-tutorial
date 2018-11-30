@@ -20,8 +20,9 @@ if (Meteor.isServer) {
 
 
   Meteor.methods({
-    'tasks.insert'(text) {
+    'tasks.insert'(text, listId) {
       check(text, String);
+      check(listId, String);
       // Make sure the user is logged in before inserting a task
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
@@ -44,6 +45,7 @@ if (Meteor.isServer) {
         username: Meteor.users.findOne(this.userId).username,
         private: false,
         dueDate: dueDate && { start: dueDate.date.start, end: dueDate.date.end },
+        listId: listId
       });
     },
 
