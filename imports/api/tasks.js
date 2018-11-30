@@ -144,12 +144,12 @@ if (Meteor.isServer) {
       return new Promise((resolve, reject) => {
         HTTP.post('https://www.googleapis.com/calendar/v3/calendars/primary/events', dataObject, (error, result) => {
           if (error) {
-            reject(error.text);
             Tasks.update(taskId, { $set: { disabled: false } });
+            reject(error);
           }
           if (result) {
-            resolve();
             Tasks.update(taskId, { $set: { googleEventId: result.data.id, disabled: false } });
+            resolve();
           }
         });
       });
@@ -194,13 +194,14 @@ if (Meteor.isServer) {
         },
       }
 
-      return new Promise((resolve,reject)=>{
+      return new Promise((resolve, reject) => {
         HTTP.del('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.googleEventId, dataObject, (error, result) => {
-        if(error) reject(error.text);  
-        Tasks.update(taskId, {
-            $unset: { googleEventId: ""},
+          Tasks.update(taskId, {
+            $unset: { googleEventId: "" },
             $set: { disabled: false }
           });
+          if (error) reject(error);
+          else resolve();
         });
       });
     },

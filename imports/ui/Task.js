@@ -21,12 +21,12 @@ class Task extends Component {
   addToGoogleCalendar() {
     if (!!!this.props.task.googleEventId) {
       Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, (error, response) => {
-        if (error) console.log(error);
+        if (error) alert(error.text);
       });
     }
     else {
       Meteor.call('tasks.removeFromGoogleCalendar', this.props.task._id, (error, response) => {
-        if (error) console.log(error);
+        if (error) alert(error.text);
       });
     }
   }
