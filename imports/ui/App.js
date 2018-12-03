@@ -15,15 +15,18 @@ class App extends Component {
         super(props);
         this.state = {
             hideCompleted: false,
-            list: 'My Tasks'
+            list: -1,
         };
     }
 
-    findListByName(name) {
-        const list = this.props.lists.find((list) => {
-            if (list.name === name) return list;
-        });
-        return list;
+    handleListAdd(event) {
+        event.preventDefault();
+        const text = ReactDOM.findDOMNode(this.refs.textInputList).value.trim();
+
+        if (text === '') alert('List name can`t be empty')
+        else Meteor.call('lists.create', text);
+
+        ReactDOM.findDOMNode(this.refs.textInputList).value = '';
     }
 
     handleSubmit(event) {
@@ -42,7 +45,7 @@ class App extends Component {
 
         if (text === '') sendInsert = false;
 
-        if (sendInsert) Meteor.call('tasks.insert', text, this.findListByName(this.state.list)._id);
+        if (sendInsert) Meteor.call('tasks.insert', text, this.state.list);
         // Clear form
         ReactDOM.findDOMNode(this.refs.textInput).value = '';
     }
@@ -57,8 +60,10 @@ class App extends Component {
         if (this.state.hideCompleted) {
             filteredTasks = filteredTasks.filter(task => !task.checked);
         }
+
         filteredTasks = filteredTasks.filter(task => {
-            if (this.state.list !== 'default') return task.listId === this.findListByName(this.state.list)._id;
+            if (this.state.list !== -1) return task.listId === this.state.list;
+            else if (this.props.lists[0]) return task.listId === this.props.lists[0]._id;
         });
 
         return filteredTasks.map((task) => {
@@ -78,8 +83,14 @@ class App extends Component {
         });
     }
 
-    handleChangeSelect() {
-        const list = ReactDOM.findDOMNode(this.refs.list).value;
+    deleteThisTaskList() {
+        Meteor.call('lists.delete', this.state.list);
+    }
+
+    handleChangeSelect(event) {
+        const selectedIndex = event.target.options.selectedIndex;
+
+        const list = event.target.options[selectedIndex].getAttribute('data-key');
         this.setState({
             list: list
         });
@@ -87,13 +98,26 @@ class App extends Component {
 
     render() {
         const options = this.props.lists.map((list) => {
-            return <option key={list._id}>{list.name}</option>;
+            return <option key={list._id} data-key={list._id}>{list.name}</option>;
         });
         return (
             <div className="container">
                 <select ref='list' onChange={this.handleChangeSelect.bind(this)}>
                     {options}
                 </select>
+                {this.props.currentUser ?
+                    <form className="new-task-list" onSubmit={this.handleListAdd.bind(this)} >
+                        <input
+                            type="text"
+                            ref="textInputList"
+                            placeholder="Type to add new tasks list"
+                        />
+                    </form> : ''
+                }
+                {this.props.currentUser ? (
+                    <button className="delete-list" onClick={this.deleteThisTaskList.bind(this)}>
+                        Delete this list
+                </button>) : ''}
 
                 <header>
                     <h1>Todo List ({this.props.incompleteCount})</h1>
