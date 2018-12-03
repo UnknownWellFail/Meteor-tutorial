@@ -45,9 +45,18 @@ class App extends Component {
 
         if (text === '') sendInsert = false;
 
-        if (sendInsert) Meteor.call('tasks.insert', text, this.state.list);
+        if (sendInsert) Meteor.call('tasks.insert', text, this.findListIndex());
         // Clear form
         ReactDOM.findDOMNode(this.refs.textInput).value = '';
+    }
+
+    findListIndex() {
+        if (this.state.list === -1) {
+            if (this.props.lists[0]) {
+                return this.props.lists[0]._id;
+            }
+        }
+        return this.state.list;
     }
 
     toggleHideCompleted() {
@@ -55,7 +64,7 @@ class App extends Component {
             hideCompleted: !this.state.hideCompleted,
         });
     }
-    
+
     renderTasks() {
         let filteredTasks = this.props.tasks;
         if (this.state.hideCompleted) {
@@ -105,9 +114,11 @@ class App extends Component {
         });
         return (
             <div className="container">
-                <select ref='list' onChange={this.handleChangeSelect.bind(this)}>
-                    {options}
-                </select>
+                {this.props.currentUser ?
+                    <select ref='list' onChange={this.handleChangeSelect.bind(this)}>
+                        {options}
+                    </select> : ''
+                }
                 {this.props.currentUser ?
                     <form className="new-task-list" onSubmit={this.handleListAdd.bind(this)} >
                         <input
