@@ -1,11 +1,8 @@
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
-import { HTTP } from 'meteor/http'
-
 
 export const Lists = new Mongo.Collection('lists');
-
 
 if (Meteor.isServer) {
   Meteor.publish('lists', function listsPublconsication() {
@@ -15,7 +12,6 @@ if (Meteor.isServer) {
       }
     );
   });
-
 
   Meteor.methods({
     'lists.create'(name) {
@@ -37,18 +33,26 @@ if (Meteor.isServer) {
     },
 
     'lists.delete'(listId) {
-      check(name, String);
+      check(listId, String);
 
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
       }
 
-      Lists.remove({
-        _id: listId,
-        owner: this.userId
+      return new Promise((resolve, reject) => {
+        if (Lists.find({ owner: this.userId }).count() !== 1) {
+          Lists.remove({
+            _id: listId,
+            owner: this.userId
+          });
+          resolve();
+        } else {
+          reject();
+        }
       });
 
     },
+    
     'lists.update'(listId) {
       check(name, String);
 

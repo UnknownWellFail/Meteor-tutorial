@@ -55,6 +55,7 @@ class App extends Component {
             hideCompleted: !this.state.hideCompleted,
         });
     }
+    
     renderTasks() {
         let filteredTasks = this.props.tasks;
         if (this.state.hideCompleted) {
@@ -84,7 +85,9 @@ class App extends Component {
     }
 
     deleteThisTaskList() {
-        Meteor.call('lists.delete', this.state.list);
+        Meteor.call('lists.delete', this.state.list !== -1 ? this.state.list : this.props.lists[0]._id, (error, response) => {
+            if (error) alert('You can`t delete your last list');
+        });
     }
 
     handleChangeSelect(event) {
