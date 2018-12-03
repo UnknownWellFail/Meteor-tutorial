@@ -45,6 +45,7 @@ if (Meteor.isServer) {
             _id: listId,
             owner: this.userId
           });
+          Meteor.call('tasks.remove.list',listId);
           resolve();
         } else {
           reject();
@@ -52,7 +53,7 @@ if (Meteor.isServer) {
       });
 
     },
-    
+
     'lists.update'(listId) {
       check(name, String);
 

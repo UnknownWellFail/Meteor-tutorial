@@ -48,6 +48,12 @@ if (Meteor.isServer) {
         listId: listId
       });
     },
+    'tasks.remove.list'(listId) {
+      check(listId, String);
+      Tasks.remove({
+        listId: listId
+      });
+    },
 
     'tasks.remove'(taskId) {
       check(taskId, String);
