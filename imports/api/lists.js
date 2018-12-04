@@ -8,7 +8,14 @@ if (Meteor.isServer) {
   Meteor.publish('lists', function listsPublconsication() {
     return Lists.find(
       {
-        owner: this.userId
+        $or: [
+          { owner: this.userId },
+          {
+            users:
+            {
+              $elemMatch: { id: this.userId }
+            }
+          }]
       }
     );
   });
@@ -30,6 +37,15 @@ if (Meteor.isServer) {
         owner: this.userId,
         username: Meteor.users.findOne(this.userId).username,
       });
+
+      /* Lists.update(
+        {
+          name
+        },
+        {
+          $pull: { users: { id: 'test' } }
+        }
+      ); */
     },
 
     'lists.delete'(listId) {
@@ -63,6 +79,28 @@ if (Meteor.isServer) {
       }
 
       Lists.update(listId, { $set: { name: name } });
-    }
+    },
+    'lists.invite'(listId, userId, role) {
+      check(listId, String);
+      check(userId, String);
+      check(role, String);
+
+      if (!this.userId) {
+        throw new Meteor.Error('Not authorized');
+      }
+
+      if (role !== 'admin' && role !== 'viewer') {
+        throw new Meteor.Error('Nonexistent role')
+      }
+
+      Lists.update(
+        {
+          _id: listId
+        },
+        {
+          $push: { users: { id: userId, role: role } }
+        }
+      );
+    },
   });
 }
