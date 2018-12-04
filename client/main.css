@@ -76,6 +76,9 @@ form {
   outline: 0;
 }
  
+.task-list-name{
+  float: right;
+}
 ul {
   margin: 0;
   padding: 0;

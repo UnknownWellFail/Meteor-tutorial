@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import classnames from 'classnames';
+import ReactDOM from 'react-dom';
 
 class TaskList extends Component {
 

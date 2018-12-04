@@ -77,24 +77,29 @@ class App extends Component {
             const currentUserId = user && user._id;
             const showPrivateButton = task.owner === currentUserId;
             const googleUser = user && user.services && user.services.google && task.owner === user._id && task.dueDate;
-
+            let listName = '';
+            if (task.listId && this.listId === '-1') {
+                const list = this.props.lists.find(item => item._id === task.listId);
+                if (list) listName = list.name;
+            }
             return (<Task
                 key={task._id}
                 task={task}
                 showPrivateButton={showPrivateButton}
                 userAuthorised={user}
                 googleUser={googleUser}
+                listName={listName}
             />);
         });
     }
 
     shouldComponentUpdate(nextProps) {
-        if (this.props.currentUser && nextProps.currentUser){
-            if(this.props.currentUser._id !== nextProps.currentUser._id){
+        if (this.props.currentUser && nextProps.currentUser) {
+            if (this.props.currentUser._id !== nextProps.currentUser._id) {
                 this.listId = '-1';
             }
-        }else{
-            this.listId = '-1'; 
+        } else {
+            this.listId = '-1';
         }
         return true;
     }

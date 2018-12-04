@@ -72,7 +72,7 @@ class Task extends Component {
         ) : ''}
 
         <span className="text">
-          <strong>{this.props.task.username}</strong>: {this.props.task.text}
+          <strong>{this.props.task.username}</strong>: {this.props.task.text} <strong className="task-list-name">{this.props.listName}</strong>
         </span>
 
       </li>
