@@ -39,28 +39,30 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Not authorized');
       }
 
-      return new Promise((resolve, reject) => {
-        if (Lists.find({ owner: this.userId }).count() !== 1) {
-          Lists.remove({
-            _id: listId,
-            owner: this.userId
-          });
-          Meteor.call('tasks.remove.list',listId);
-          resolve();
-        } else {
-          reject();
-        }
-      });
+      if (Lists.find({ owner: this.userId }).count() !== 1) {
+        throw new Meteor.Error('You can`t remove your last list');
+      }
 
+      Lists.remove({
+        _id: listId,
+        owner: this.userId
+      });
+      Meteor.call('tasks.remove.list', listId);
     },
 
-    'lists.update'(listId) {
+    'lists.update'(listId, name) {
+      check(listId, String);
       check(name, String);
 
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
       }
 
+      if (name === '') {
+        throw new Meteor.Error('Name can`t be empty');
+      }
+
+      Lists.update(listId, { $set: { name: name } });
     }
   });
 }

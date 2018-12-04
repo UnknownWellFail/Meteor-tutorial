@@ -6,27 +6,27 @@ import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
 import { Tasks } from '../api/tasks.js';
 import Task from './Task.js';
+import TaskList from './TaskList.js'
 import AccountsUIWrapper from './AccountsUIWrapper.js';
 import { Lists } from '../api/lists.js';
 
 // App component - represents the whole app1
 class App extends Component {
+
+    listId;
+
     constructor(props) {
         super(props);
         this.state = {
             hideCompleted: false,
-            list: -1,
         };
     }
 
-    handleListAdd(event) {
-        event.preventDefault();
-        const text = ReactDOM.findDOMNode(this.refs.textInputList).value.trim();
-
-        if (text === '') alert('List name can`t be empty')
-        else Meteor.call('lists.create', text);
-
-        ReactDOM.findDOMNode(this.refs.textInputList).value = '';
+    setListId(id) {
+        if (this.listId !== id) {
+            this.listId = id;
+            this.setState({});
+        }
     }
 
     handleSubmit(event) {
@@ -45,18 +45,15 @@ class App extends Component {
 
         if (text === '') sendInsert = false;
 
-        if (sendInsert) Meteor.call('tasks.insert', text, this.findListIndex());
+        if (sendInsert) {
+            Meteor.call('tasks.insert', text, (error, result) => {
+                if (result && this.listId !== '-1') {
+                    Meteor.call('tasks.setList', result, this.listId);
+                }
+            });
+        }
         // Clear form
         ReactDOM.findDOMNode(this.refs.textInput).value = '';
-    }
-
-    findListIndex() {
-        if (this.state.list === -1) {
-            if (this.props.lists[0]) {
-                return this.props.lists[0]._id;
-            }
-        }
-        return this.state.list;
     }
 
     toggleHideCompleted() {
@@ -71,68 +68,50 @@ class App extends Component {
             filteredTasks = filteredTasks.filter(task => !task.checked);
         }
 
-        filteredTasks = filteredTasks.filter(task => {
-            if (this.state.list !== -1) return task.listId === this.state.list;
-            else if (this.props.lists[0]) return task.listId === this.props.lists[0]._id;
-        });
+        if (this.listId !== '-1') {
+            filteredTasks = filteredTasks.filter(task => task.listId === this.listId);
+        }
 
         return filteredTasks.map((task) => {
             const user = this.props.currentUser;
             const currentUserId = user && user._id;
             const showPrivateButton = task.owner === currentUserId;
-            const userAuthorised = !!user;
             const googleUser = user && user.services && user.services.google && task.owner === user._id && task.dueDate;
 
             return (<Task
                 key={task._id}
                 task={task}
                 showPrivateButton={showPrivateButton}
-                userAuthorised={userAuthorised}
+                userAuthorised={user}
                 googleUser={googleUser}
             />);
         });
     }
 
-    deleteThisTaskList() {
-        Meteor.call('lists.delete', this.state.list !== -1 ? this.state.list : this.props.lists[0]._id, (error, response) => {
-            if (error) alert('You can`t delete your last list');
-        });
-    }
-
-    handleChangeSelect(event) {
-        const selectedIndex = event.target.options.selectedIndex;
-
-        const list = event.target.options[selectedIndex].getAttribute('data-key');
-        this.setState({
-            list: list
-        });
+    shouldComponentUpdate(nextProps) {
+        if (this.props.currentUser && nextProps.currentUser){
+            if(this.props.currentUser._id !== nextProps.currentUser._id){
+                this.listId = '-1';
+            }
+        }else{
+            this.listId = '-1'; 
+        }
+        return true;
     }
 
     render() {
         const options = this.props.lists.map((list) => {
             return <option key={list._id} data-key={list._id}>{list.name}</option>;
         });
+        options.unshift(<option key="-1" data-key="-1">All tasks</option>);
         return (
             <div className="container">
-                {this.props.currentUser ?
-                    <select ref='list' onChange={this.handleChangeSelect.bind(this)}>
-                        {options}
-                    </select> : ''
-                }
-                {this.props.currentUser ?
-                    <form className="new-task-list" onSubmit={this.handleListAdd.bind(this)} >
-                        <input
-                            type="text"
-                            ref="textInputList"
-                            placeholder="Type to add new tasks list"
-                        />
-                    </form> : ''
-                }
-                {this.props.currentUser ? (
-                    <button className="delete-list" onClick={this.deleteThisTaskList.bind(this)}>
-                        Delete this list
-                </button>) : ''}
-
+                <TaskList
+                    options={options}
+                    currentUser={this.props.currentUser}
+                    setListId={this.setListId.bind(this)}
+                    listId={this.listId}
+                />
                 <header>
                     <h1>Todo List ({this.props.incompleteCount})</h1>
                 </header>
@@ -172,9 +151,10 @@ class App extends Component {
 }
 
 export default withTracker(() => {
-    Meteor.subscribe('tasks');
     Meteor.subscribe('users.me');
     Meteor.subscribe('lists');
+    Meteor.subscribe('tasks');
+
     return {
         lists: Lists.find().fetch(),
         tasks: Tasks.find({}, { sort: { createdAt: -1 } }).fetch(),

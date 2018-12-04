@@ -20,9 +20,9 @@ if (Meteor.isServer) {
 
 
   Meteor.methods({
-    'tasks.insert'(text, listId) {
+    'tasks.insert'(text) {
       check(text, String);
-      check(listId, String);
+
       // Make sure the user is logged in before inserting a task
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
@@ -38,14 +38,13 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Text is empty');
       }
 
-      Tasks.insert({
+      return Tasks.insert({
         text,
         createdAt: new Date(),
         owner: this.userId,
         username: Meteor.users.findOne(this.userId).username,
         private: false,
         dueDate: dueDate && { start: dueDate.date.start, end: dueDate.date.end },
-        listId: listId
       });
     },
     'tasks.remove.list'(listId) {
@@ -69,6 +68,23 @@ if (Meteor.isServer) {
           { owner: this.userId },
         ]
       });
+    },
+    'tasks.setList'(taskId, listId) {
+      check(taskId, String);
+      check(listId, String);
+
+      if (!this.userId) {
+        throw new Meteor.Error('Not authorized');
+      }
+
+      Tasks.update(
+        {
+          _id: taskId,
+        },
+        {
+          $set: { listId: listId }
+        }
+      );
     },
 
     'tasks.setChecked'(taskId, setChecked) {
