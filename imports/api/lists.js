@@ -4,6 +4,20 @@ import { check } from 'meteor/check';
 
 export const Lists = new Mongo.Collection('lists');
 
+export const hasAccessToList = ({ listId, userId, roles }) => {
+  const list = Lists.findOne({
+    _id: listId,
+    $or: [
+      { owner: userId },
+      { 'users._id': userId }
+    ]
+  });
+
+  if (!list) throw new Meteor.Error('List not found');
+
+  if (roles) return !!list.users.find(({ _id, role }) => _id === userId && roles.includes(role));
+};
+
 if (Meteor.isServer) {
   Meteor.publish('lists', function listsPublconsication() {
     return Lists.find(
@@ -11,10 +25,7 @@ if (Meteor.isServer) {
         $or: [
           { owner: this.userId },
           {
-            users:
-            {
-              $elemMatch: { id: this.userId }
-            }
+            'users._id': this.userId
           }]
       }
     );
@@ -38,14 +49,6 @@ if (Meteor.isServer) {
         username: Meteor.users.findOne(this.userId).username,
       });
 
-      /* Lists.update(
-        {
-          name
-        },
-        {
-          $pull: { users: { id: 'test' } }
-        }
-      ); */
     },
 
     'lists.delete'(listId) {
@@ -89,16 +92,13 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Not authorized');
       }
 
-      if (role !== 'admin' && role !== 'viewer') {
-        throw new Meteor.Error('Nonexistent role')
-      }
 
       Lists.update(
         {
           _id: listId
         },
         {
-          $push: { users: { id: userId, role: role } }
+          $push: { users: { _id: userId, role: role } }
         }
       );
     },
