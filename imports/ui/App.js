@@ -46,11 +46,7 @@ class App extends Component {
         if (text === '') sendInsert = false;
 
         if (sendInsert) {
-            Meteor.call('tasks.insert', text, (error, result) => {
-                if (result && this.listId !== '-1') {
-                    Meteor.call('tasks.setList', result, this.listId);
-                }
-            });
+            Meteor.call('tasks.insert', text, this.listId);
         }
         // Clear form
         ReactDOM.findDOMNode(this.refs.textInput).value = '';

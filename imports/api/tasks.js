@@ -4,6 +4,7 @@ import { check } from 'meteor/check';
 import { HTTP } from 'meteor/http'
 
 import findDate from './dueDates'
+import { hasAccessToList } from './lists'
 
 export const Tasks = new Mongo.Collection('tasks');
 
@@ -18,10 +19,10 @@ if (Meteor.isServer) {
     );
   });
 
-
   Meteor.methods({
-    'tasks.insert'(text) {
+    'tasks.insert'(text, listId) {
       check(text, String);
+      check(listId, String);
 
       // Make sure the user is logged in before inserting a task
       if (!this.userId) {
@@ -38,13 +39,18 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Text is empty');
       }
 
-      return Tasks.insert({
+      if (listId !== '-1' && !hasAccessToList({ listId, userId: this.userId, roles: ['admin'] })) {
+        throw new Meteor.Error('You do not have permissions');
+      }
+
+      Tasks.insert({
         text,
         createdAt: new Date(),
         owner: this.userId,
         username: Meteor.users.findOne(this.userId).username,
         private: false,
         dueDate: dueDate && { start: dueDate.date.start, end: dueDate.date.end },
+        listId: listId !== '-1' && listId
       });
     },
     'tasks.remove.list'(listId) {
@@ -53,12 +59,21 @@ if (Meteor.isServer) {
         listId: listId
       });
     },
-
     'tasks.remove'(taskId) {
       check(taskId, String);
 
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
+      }
+
+      const task = Tasks.findOne(taskId);
+
+      if (!task) {
+        throw new Meteor.Error('Task not found');
+      }
+
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] })) {
+        throw new Meteor.Error('You do not have permissions');
       }
 
       Tasks.remove({
@@ -69,30 +84,22 @@ if (Meteor.isServer) {
         ]
       });
     },
-    'tasks.setList'(taskId, listId) {
-      check(taskId, String);
-      check(listId, String);
-
-      if (!this.userId) {
-        throw new Meteor.Error('Not authorized');
-      }
-
-      Tasks.update(
-        {
-          _id: taskId,
-        },
-        {
-          $set: { listId: listId }
-        }
-      );
-    },
-
     'tasks.setChecked'(taskId, setChecked) {
       check(taskId, String);
       check(setChecked, Boolean);
 
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
+      }
+
+      const task = Tasks.findOne(taskId);
+
+      if (!task) {
+        throw new Meteor.Error('Task not found');
+      }
+
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] })) {
+        throw new Meteor.Error('You do not have permissions');
       }
 
       Tasks.update({
@@ -112,12 +119,13 @@ if (Meteor.isServer) {
 
       const task = Tasks.findOne(taskId);
 
-      if (task === null) {
+      if (!task) {
         throw new Meteor.Error('Task not found');
       }
+
       // Make sure only the task owner can make a task private
-      if (task.owner !== this.userId) {
-        throw new Meteor.Error('Not authorized');
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] })) {
+        throw new Meteor.Error('You do not have permissions');
       }
 
       Tasks.update(taskId, { $set: { private: setToPrivate } });
@@ -134,14 +142,14 @@ if (Meteor.isServer) {
       if (task.disabled) {
         throw new Meteor.Error('Sending request now');
       }
-      const user = Meteor.users.findOne(this.userId);
+      const user = Meteor.users.findOne(task.owner);
 
       if (!this.userId || !user) {
         throw new Meteor.Error('Not authorized');
       }
 
-      if (task.owner !== this.userId) {
-        throw new Meteor.Error('Not authorized');
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] })) {
+        throw new Meteor.Error('You do not have permissions');
       }
 
       if (!user.services || !user.services.google) {
@@ -191,14 +199,14 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Sending request now');
       }
 
-      const user = Meteor.users.findOne(this.userId);
+      const user = Meteor.users.findOne(task.owner);
 
       if (!this.userId || !user) {
         throw new Meteor.Error('Not authorized');
       }
-
-      if (task.owner !== this.userId) {
-        throw new Meteor.Error('Not authorized');
+      
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] })) {
+        throw new Meteor.Error('You do not have permissions');
       }
 
       if (!user.services || !user.services.google) {
