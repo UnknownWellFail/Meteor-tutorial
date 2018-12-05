@@ -15,6 +15,8 @@ export const hasAccessToList = ({ listId, userId, roles }) => {
 
   if (!list) throw new Meteor.Error('List not found');
 
+  if (userId === list.owner) return true;
+
   if (roles) return !!list.users.find(({ _id, role }) => _id === userId && roles.includes(role));
 };
 
