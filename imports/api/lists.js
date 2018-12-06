@@ -2,7 +2,29 @@ import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
+import { getTodayDate } from '../utils/utils';
+
 export const Lists = new Mongo.Collection('lists');
+
+export const getListName = listId => {
+  const list = Lists.findOne(listId);
+  if(list) {
+    return list.name;
+  }
+};
+
+export const createdToday = ({ listsIds }) => {
+  const date = getTodayDate();
+
+  const count = Lists.find(
+    {
+      _id: { $in: listsIds },
+      createdAt: { $gte: date.start, $lt: date.end },
+    }
+  ).count();
+
+  return count;
+};
 
 export const hasAccessToList = ({ listId, userId, roles }) => {
   if(!listId){
@@ -60,6 +82,7 @@ if (Meteor.isServer) {
       Lists.insert({
         name,
         owner: this.userId,
+        createdAt: new Date(),
         username: Meteor.users.findOne(this.userId).username,
       });
 
