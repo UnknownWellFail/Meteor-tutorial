@@ -4,9 +4,8 @@ import '../imports/api/tasks.js';
 import '../imports/api/lists.js';
 import { Lists } from '../imports/api/lists.js';
 
-
 if (Meteor.isServer) {
-  Accounts.onCreateUser((options, user) => {
+  Accounts.onCreateUser( (options, user) => {
     if (user.services.google) {
       user.username = user.services.google.email;
     }
@@ -15,11 +14,14 @@ if (Meteor.isServer) {
       owner: user._id,
       username: user.username,
     });
-    
+
     return user;
   });
+  /* eslint-disable*/
   Meteor.publish('users.me', function () {
-    if (!this.userId) return this.ready();
+    if (!this.userId) {
+      return this.ready();
+    }
     const projection = {
       'services.google.id': 1
     };
@@ -27,4 +29,5 @@ if (Meteor.isServer) {
       { _id: this.userId },
       { fields: projection });
   });
+  /* eslint-enable*/
 }

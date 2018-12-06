@@ -19,14 +19,18 @@ class Task extends Component {
   }
 
   addToGoogleCalendar() {
-    if (!!!this.props.task.googleEventId) {
-      Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, (error, response) => {
-        if (error) alert(error.text);
+    if (this.props.task.googleEventId) {
+      Meteor.call('tasks.removeFromGoogleCalendar', this.props.task._id, (error, response) => {
+        if (error) {
+          alert(error.text);
+        }
       });
     }
     else {
-      Meteor.call('tasks.removeFromGoogleCalendar', this.props.task._id, (error, response) => {
-        if (error) alert(error.text);
+      Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, (error, response) => {
+        if (error) {
+          alert(error.text);
+        }
       });
     }
   }
@@ -54,7 +58,8 @@ class Task extends Component {
         {this.props.userAuthorised ? (
           <button className="delete" onClick={this.deleteThisTask.bind(this)}>
             &times;
-        </button>) : ''}
+          </button>) :
+          ''}
 
         {this.props.userAuthorised ? (
           <input
@@ -67,7 +72,7 @@ class Task extends Component {
 
         {this.props.showPrivateButton ? (
           <button className="toggle-private" onClick={this.togglePrivate.bind(this)}>
-            {!this.props.task.private ? 'Private' : 'Public'}
+            {this.props.task.private ? 'Public' : 'Private' }
           </button>
         ) : ''}
 

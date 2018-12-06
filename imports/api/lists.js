@@ -4,11 +4,43 @@ import { check } from 'meteor/check';
 
 export const Lists = new Mongo.Collection('lists');
 
+export const hasAccessToList = ({ listId, userId, roles }) => {
+  if(!listId){
+    return true;
+  }
+
+  const list = Lists.findOne({
+    _id: listId,
+    $or: [
+      { owner: userId },
+      { 'users._id': userId }
+    ]
+  });
+
+  if (!list) {
+    throw new Meteor.Error('List not found');
+  }
+  if (userId === list.owner) {
+    return true;
+  }
+  if (roles) {
+    return !!list.users.find( ({ _id, role }) => _id === userId && roles.includes(role) );
+  }
+};
+
 if (Meteor.isServer) {
   Meteor.publish('lists', function listsPublconsication() {
     return Lists.find(
       {
-        owner: this.userId
+        $or: [
+          /* eslint-disable*/
+          { 
+            owner: this.userId 
+          },
+          {
+            'users._id': this.userId
+          }]
+          /* eslint-enable*/
       }
     );
   });
@@ -30,6 +62,7 @@ if (Meteor.isServer) {
         owner: this.userId,
         username: Meteor.users.findOne(this.userId).username,
       });
+
     },
 
     'lists.delete'(listId) {
@@ -63,6 +96,25 @@ if (Meteor.isServer) {
       }
 
       Lists.update(listId, { $set: { name: name } });
-    }
+    },
+    'lists.invite'(listId, userId, role) {
+      check(listId, String);
+      check(userId, String);
+      check(role, String);
+
+      if (!this.userId) {
+        throw new Meteor.Error('Not authorized');
+      }
+
+
+      Lists.update(
+        {
+          _id: listId
+        },
+        {
+          $push: { users: { _id: userId, role: role } }
+        }
+      );
+    },
   });
 }

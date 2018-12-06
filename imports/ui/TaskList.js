@@ -1,33 +1,45 @@
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
-import classnames from 'classnames';
-import ReactDOM from 'react-dom';
 
 class TaskList extends Component {
 
   constructor(props) {
     super(props);
+    this.state = {
+      listName: ''
+    };
+  }
 
+  handleChangeTaskText(event) {
+    this.setState({
+      listName: event.target.value
+    });
   }
 
   handleListAdd(event) {
     event.preventDefault();
-    const text = ReactDOM.findDOMNode(this.refs.textInputList).value.trim();
+    const text = this.state.listName.trim();
 
-    if (text === '') alert('List name can`t be empty')
-    else Meteor.call('lists.create', text);
+    if (text === '') {
+      alert('List name can`t be empty');
+    }
+    else {
+      Meteor.call('lists.create', text);
+    }
 
-    ReactDOM.findDOMNode(this.refs.textInputList).value = '';
+    this.setState({ listName: '' });
   }
 
   deleteThisTaskList() {
     const listId = this.props.listId;
     if (listId === '-1') {
-      alert('You can`t delete this list')
+      alert('You can`t delete this list');
       return;
     }
     Meteor.call('lists.delete', listId, (error, response) => {
-      if (error) alert(error);
+      if (error) {
+        alert(error);
+      }
     });
   }
 
@@ -42,23 +54,27 @@ class TaskList extends Component {
     return (
       <div className="task-list">
         {this.props.currentUser ?
-          <select ref='list' onChange={this.handleChangeSelect.bind(this)}>
+          <select onChange={this.handleChangeSelect.bind(this)}>
             {this.props.options}
-          </select> : ''
+          </select> :
+          ''
         }
         {this.props.currentUser ?
           <form className="new-task-list" onSubmit={this.handleListAdd.bind(this)} >
             <input
               type="text"
-              ref="textInputList"
               placeholder="Type to add new tasks list"
+              value={this.state.listName}
+              onChange={this.handleChangeTaskText.bind(this)}
             />
-          </form> : ''
+          </form> :
+          ''
         }
         {this.props.currentUser ? (
           <button className="delete-list" onClick={this.deleteThisTaskList.bind(this)}>
             Delete this list
-                </button>) : ''}
+          </button>) :
+          ''}
 
       </div>
     );
