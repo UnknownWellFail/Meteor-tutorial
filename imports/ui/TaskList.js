@@ -14,8 +14,12 @@ class TaskList extends Component {
     event.preventDefault();
     const text = ReactDOM.findDOMNode(this.refs.textInputList).value.trim();
 
-    if (text === '') alert('List name can`t be empty')
-    else Meteor.call('lists.create', text);
+    if (text === '') {
+      alert('List name can`t be empty');
+    }
+    else {
+      Meteor.call('lists.create', text);
+    }
 
     ReactDOM.findDOMNode(this.refs.textInputList).value = '';
   }
@@ -27,7 +31,9 @@ class TaskList extends Component {
       return;
     }
     Meteor.call('lists.delete', listId, (error, response) => {
-      if (error) alert(error);
+      if (error) {
+        alert(error);
+      }
     });
   }
 

@@ -1,10 +1,10 @@
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
-import { HTTP } from 'meteor/http'
+import { HTTP } from 'meteor/http';
 
-import findDate from './dueDates'
-import { hasAccessToList } from './lists'
+import findDate from './dueDates';
+import { hasAccessToList } from './lists';
 
 export const Tasks = new Mongo.Collection('tasks');
 
@@ -50,7 +50,7 @@ if (Meteor.isServer) {
         username: Meteor.users.findOne(this.userId).username,
         private: false,
         dueDate: dueDate && { start: dueDate.date.start, end: dueDate.date.end },
-        listId: listId !== '-1' && listId
+        listId: listId === '-1' ? null : listId
       });
     },
     'tasks.remove.list'(listId) {
@@ -72,7 +72,7 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Task not found');
       }
 
-      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] })) {
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('You do not have permissions');
       }
 
@@ -84,9 +84,9 @@ if (Meteor.isServer) {
         ]
       });
     },
-    'tasks.setChecked'(taskId, setChecked) {
+    'tasks.setChecked'(taskId, isChecked) {
       check(taskId, String);
-      check(setChecked, Boolean);
+      check(isChecked, Boolean);
 
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
@@ -98,7 +98,7 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Task not found');
       }
 
-      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] })) {
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('You do not have permissions');
       }
 
@@ -107,11 +107,11 @@ if (Meteor.isServer) {
         $or: [
           { private: { $ne: true } },
           { owner: this.userId }]
-      }, { $set: { checked: setChecked } })
+      }, { $set: { checked: isChecked } });
     },
-    'tasks.setPrivate'(taskId, setToPrivate) {
+    'tasks.setPrivate'(taskId, isPrivate) {
       check(taskId, String);
-      check(setToPrivate, Boolean);
+      check(isPrivate, Boolean);
 
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
@@ -124,11 +124,11 @@ if (Meteor.isServer) {
       }
 
       // Make sure only the task owner can make a task private
-      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] })) {
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('You do not have permissions');
       }
 
-      Tasks.update(taskId, { $set: { private: setToPrivate } });
+      Tasks.update(taskId, { $set: { private: isPrivate } });
     },
     'tasks.addToGoogleCalendar'(taskId) {
       check(taskId, String);
@@ -148,7 +148,7 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Not authorized');
       }
 
-      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] })) {
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('You do not have permissions');
       }
 
@@ -160,7 +160,7 @@ if (Meteor.isServer) {
 
       const dataObject = {
         headers: {
-          'Authorization': 'Bearer ' + user.services.google.accessToken,
+          Authorization: 'Bearer ' + user.services.google.accessToken,
           'Content-Type': 'application/json'
         },
         data: {
@@ -173,7 +173,7 @@ if (Meteor.isServer) {
           }
         }
       };
-      return new Promise((resolve, reject) => {
+      return new Promise( (resolve, reject) => {
         HTTP.post('https://www.googleapis.com/calendar/v3/calendars/primary/events', dataObject, (error, result) => {
           if (error) {
             Tasks.update(taskId, { $set: { disabled: false } });
@@ -204,8 +204,8 @@ if (Meteor.isServer) {
       if (!this.userId || !user) {
         throw new Meteor.Error('Not authorized');
       }
-      
-      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] })) {
+
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('You do not have permissions');
       }
 
@@ -221,19 +221,23 @@ if (Meteor.isServer) {
 
       const dataObject = {
         headers: {
-          'Authorization': 'Bearer ' + user.services.google.accessToken,
+          Authorization: 'Bearer ' + user.services.google.accessToken,
           'Content-Type': 'application/json'
         },
-      }
+      };
 
-      return new Promise((resolve, reject) => {
+      return new Promise( (resolve, reject) => {
         HTTP.del('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.googleEventId, dataObject, (error, result) => {
           Tasks.update(taskId, {
             $unset: { googleEventId: "" },
             $set: { disabled: false }
           });
-          if (error) reject(error);
-          else resolve();
+          if (error){
+            reject(error);
+          }
+          else {
+            resolve();
+          }
         });
       });
     },
