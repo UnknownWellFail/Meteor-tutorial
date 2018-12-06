@@ -5,6 +5,10 @@ import { check } from 'meteor/check';
 export const Lists = new Mongo.Collection('lists');
 
 export const hasAccessToList = ({ listId, userId, roles }) => {
+  if(!listId){
+    return true;
+  }
+
   const list = Lists.findOne({
     _id: listId,
     $or: [
@@ -20,7 +24,7 @@ export const hasAccessToList = ({ listId, userId, roles }) => {
     return true;
   }
   if (roles) {
-    return list.users.find( ({ _id, role }) => _id === userId && roles.includes(role) );
+    return !!list.users.find( ({ _id, role }) => _id === userId && roles.includes(role) );
   }
 };
 

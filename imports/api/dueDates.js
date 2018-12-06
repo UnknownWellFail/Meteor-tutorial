@@ -63,7 +63,7 @@ const findTime = text => {
   return { text: text.replace(time, ''), date: date };
 };
 
-export default findDate = text => {
+export const findDate = text => {
   const day = findWordTime(text);
   const time = day === null ? findTime(text) : findTime(day.text) ;
 

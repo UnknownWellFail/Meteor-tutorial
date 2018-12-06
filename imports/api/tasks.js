@@ -3,7 +3,7 @@ import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 import { HTTP } from 'meteor/http';
 
-import findDate from './dueDates';
+import { findDate } from './dueDates';
 import { hasAccessToList } from './lists';
 
 export const Tasks = new Mongo.Collection('tasks');
@@ -39,7 +39,7 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Text is empty');
       }
 
-      if (listId !== '-1' && !hasAccessToList({ listId, userId: this.userId, roles: ['admin'] })) {
+      if (listId !== '-1' && !hasAccessToList({ listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('You do not have permissions');
       }
 

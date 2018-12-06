@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
-import classnames from 'classnames';
 import ReactDOM from 'react-dom';
 
 class TaskList extends Component {
@@ -27,7 +26,7 @@ class TaskList extends Component {
   deleteThisTaskList() {
     const listId = this.props.listId;
     if (listId === '-1') {
-      alert('You can`t delete this list')
+      alert('You can`t delete this list');
       return;
     }
     Meteor.call('lists.delete', listId, (error, response) => {
@@ -50,7 +49,8 @@ class TaskList extends Component {
         {this.props.currentUser ?
           <select ref='list' onChange={this.handleChangeSelect.bind(this)}>
             {this.props.options}
-          </select> : ''
+          </select> :
+          ''
         }
         {this.props.currentUser ?
           <form className="new-task-list" onSubmit={this.handleListAdd.bind(this)} >
@@ -59,12 +59,14 @@ class TaskList extends Component {
               ref="textInputList"
               placeholder="Type to add new tasks list"
             />
-          </form> : ''
+          </form> :
+          ''
         }
         {this.props.currentUser ? (
           <button className="delete-list" onClick={this.deleteThisTaskList.bind(this)}>
             Delete this list
-                </button>) : ''}
+          </button>) :
+          ''}
 
       </div>
     );
