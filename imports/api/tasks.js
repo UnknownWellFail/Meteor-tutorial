@@ -32,7 +32,7 @@ if (Meteor.isServer) {
 
       // Make sure the user is logged in before inserting a task
       if (!this.userId) {
-        throw new Meteor.Error('Not authorized');
+        throw new Meteor.Error('Access denied');
       }
 
       if (text === '') {
@@ -46,7 +46,7 @@ if (Meteor.isServer) {
       }
 
       if (listId !== '-1' && !hasAccessToList({ listId, userId: this.userId, roles: ['admin'] }) ) {
-        throw new Meteor.Error('You do not have permissions');
+        throw new Meteor.Error('Access denied');
       }
 
       Tasks.insert({
@@ -69,7 +69,7 @@ if (Meteor.isServer) {
       check(taskId, String);
 
       if (!this.userId) {
-        throw new Meteor.Error('Not authorized');
+        throw new Meteor.Error('Access denied');
       }
 
       const task = Tasks.findOne(taskId);
@@ -79,7 +79,7 @@ if (Meteor.isServer) {
       }
 
       if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
-        throw new Meteor.Error('You do not have permissions');
+        throw new Meteor.Error('Access denied');
       }
 
       Tasks.remove({
@@ -95,7 +95,7 @@ if (Meteor.isServer) {
       check(isChecked, Boolean);
 
       if (!this.userId) {
-        throw new Meteor.Error('Not authorized');
+        throw new Meteor.Error('Access denied');
       }
 
       const task = Tasks.findOne(taskId);
@@ -105,7 +105,7 @@ if (Meteor.isServer) {
       }
 
       if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
-        throw new Meteor.Error('You do not have permissions');
+        throw new Meteor.Error('Access denied');
       }
 
       Tasks.update({
@@ -120,7 +120,7 @@ if (Meteor.isServer) {
       check(isPrivate, Boolean);
 
       if (!this.userId) {
-        throw new Meteor.Error('Not authorized');
+        throw new Meteor.Error('Access denied');
       }
 
       const task = Tasks.findOne(taskId);
@@ -131,7 +131,7 @@ if (Meteor.isServer) {
 
       // Make sure only the task owner can make a task private
       if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
-        throw new Meteor.Error('You do not have permissions');
+        throw new Meteor.Error('Access denied');
       }
 
       Tasks.update(taskId, { $set: { private: isPrivate } });
@@ -151,11 +151,11 @@ if (Meteor.isServer) {
       const user = Meteor.users.findOne(task.owner);
 
       if (!this.userId || !user) {
-        throw new Meteor.Error('Not authorized');
+        throw new Meteor.Error('Access denied');
       }
 
       if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
-        throw new Meteor.Error('You do not have permissions');
+        throw new Meteor.Error('Access denied');
       }
 
       if (!user.services || !user.services.google) {
@@ -208,11 +208,11 @@ if (Meteor.isServer) {
       const user = Meteor.users.findOne(task.owner);
 
       if (!this.userId || !user) {
-        throw new Meteor.Error('Not authorized');
+        throw new Meteor.Error('Access denied');
       }
 
       if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
-        throw new Meteor.Error('You do not have permissions');
+        throw new Meteor.Error('Access denied');
       }
 
       if (!user.services || !user.services.google) {
