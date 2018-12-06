@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
@@ -18,8 +17,15 @@ class App extends Component {
     super(props);
     this.state = {
       hideCompleted: false,
+      taskName: '',
     };
     this.listId = -1;
+  }
+
+  handleChangeTaskText(event){
+    this.setState({
+      taskName: event.target.value
+    });
   }
 
   setListId(id) {
@@ -33,7 +39,7 @@ class App extends Component {
     event.preventDefault();
 
     // Find the text field via the React ref
-    const text = ReactDOM.findDOMNode(this.refs.textInput).value.trim();
+    const text = this.state.taskName.trim();
     const dueDate = findDate(text);
 
     let sendInsert = true;
@@ -51,7 +57,7 @@ class App extends Component {
       Meteor.call('tasks.insert', text, this.listId);
     }
     // Clear form
-    ReactDOM.findDOMNode(this.refs.textInput).value = '';
+    this.setState({ taskName: '' });
   }
 
   toggleHideCompleted() {
@@ -137,8 +143,9 @@ class App extends Component {
           <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
             <input
               type="text"
-              ref="textInput"
               placeholder="Type to add new tasks"
+              value= {this.state.taskName}
+              onChange={this.handleChangeTaskText.bind(this)}
             />
           </form> :
           ''

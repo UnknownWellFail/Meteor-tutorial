@@ -33,10 +33,14 @@ if (Meteor.isServer) {
     return Lists.find(
       {
         $or: [
-          { owner: this.userId },
+          /* eslint-disable*/
+          { 
+            owner: this.userId 
+          },
           {
             'users._id': this.userId
           }]
+          /* eslint-enable*/
       }
     );
   });

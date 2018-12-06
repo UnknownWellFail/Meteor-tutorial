@@ -1,17 +1,24 @@
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
-import ReactDOM from 'react-dom';
 
 class TaskList extends Component {
 
   constructor(props) {
     super(props);
+    this.state = {
+      listName: ''
+    };
+  }
 
+  handleChangeTaskText(event) {
+    this.setState({
+      listName: event.target.value
+    });
   }
 
   handleListAdd(event) {
     event.preventDefault();
-    const text = ReactDOM.findDOMNode(this.refs.textInputList).value.trim();
+    const text = this.state.listName.trim();
 
     if (text === '') {
       alert('List name can`t be empty');
@@ -20,7 +27,7 @@ class TaskList extends Component {
       Meteor.call('lists.create', text);
     }
 
-    ReactDOM.findDOMNode(this.refs.textInputList).value = '';
+    this.setState({ listName: '' });
   }
 
   deleteThisTaskList() {
@@ -47,7 +54,7 @@ class TaskList extends Component {
     return (
       <div className="task-list">
         {this.props.currentUser ?
-          <select ref='list' onChange={this.handleChangeSelect.bind(this)}>
+          <select onChange={this.handleChangeSelect.bind(this)}>
             {this.props.options}
           </select> :
           ''
@@ -56,8 +63,9 @@ class TaskList extends Component {
           <form className="new-task-list" onSubmit={this.handleListAdd.bind(this)} >
             <input
               type="text"
-              ref="textInputList"
               placeholder="Type to add new tasks list"
+              value={this.state.listName}
+              onChange={this.handleChangeTaskText.bind(this)}
             />
           </form> :
           ''

@@ -17,6 +17,7 @@ if (Meteor.isServer) {
 
     return user;
   });
+  /* eslint-disable*/
   Meteor.publish('users.me', function () {
     if (!this.userId) {
       return this.ready();
@@ -28,4 +29,5 @@ if (Meteor.isServer) {
       { _id: this.userId },
       { fields: projection });
   });
+  /* eslint-enable*/
 }
