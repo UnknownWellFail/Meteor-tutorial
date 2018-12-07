@@ -8,14 +8,17 @@ class Task extends Component {
   toggleChecked() {
     // Set the checked property to the opposite of its current value
     Meteor.call('tasks.setChecked', this.props.task._id, !this.props.task.checked);
+    mixpanel.track("Checked task");
   }
 
   deleteThisTask() {
     Meteor.call('tasks.remove', this.props.task._id);
+    mixpanel.track("Remove task");
   }
 
   togglePrivate() {
     Meteor.call('tasks.setPrivate', this.props.task._id, !this.props.task.private);
+    mixpanel.track("Set task is private/public");
   }
 
   addToGoogleCalendar() {
@@ -25,9 +28,11 @@ class Task extends Component {
           alert(error.text);
         }
       });
+      mixpanel.track("Remove from google calendar");
     }
     else {
       Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, (error, response) => {
+        mixpanel.track("Add to google calendar");
         if (error) {
           alert(error.text);
         }

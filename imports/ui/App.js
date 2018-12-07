@@ -54,6 +54,7 @@ class App extends Component {
     }
 
     if (sendInsert) {
+      mixpanel.track("task insert");
       Meteor.call('tasks.insert', text, this.listId);
     }
     // Clear form
