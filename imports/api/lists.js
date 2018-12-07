@@ -129,7 +129,6 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Not authorized');
       }
 
-
       Lists.update(
         {
           _id: listId
