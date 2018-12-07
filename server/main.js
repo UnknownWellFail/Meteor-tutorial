@@ -8,6 +8,7 @@ if (Meteor.isServer) {
   Accounts.onCreateUser( (options, user) => {
     if (user.services.google) {
       user.username = user.services.google.email;
+      user.email = user.services.google.email;
     }
     Lists.insert({
       name: 'My Tasks',
@@ -23,6 +24,7 @@ if (Meteor.isServer) {
       return this.ready();
     }
     const projection = {
+      'email': 1,
       'services.google.id': 1
     };
     return Meteor.users.find(

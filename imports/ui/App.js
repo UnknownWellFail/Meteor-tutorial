@@ -113,8 +113,9 @@ class App extends Component {
   render() {
     const currentUser = this.props.currentUser;
     if (this.props.currentUser) {
-      mixpanel.identify(this.props.currentUser);
+      mixpanel.identify(currentUser._id);
       mixpanel.people.set({
+        name: currentUser.username,
         $email: currentUser.email ? currentUser.email : 'none'
       });
     }
