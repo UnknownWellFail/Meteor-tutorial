@@ -21,7 +21,7 @@ class App extends Component {
     this.listId = -1;
   }
 
-  handleChangeTaskText(event){
+  handleChangeTaskText(event) {
     this.setState({
       taskName: event.target.value
     });
@@ -111,6 +111,13 @@ class App extends Component {
   }
 
   render() {
+    const currentUser = this.props.currentUser;
+    if (this.props.currentUser) {
+      mixpanel.identify(this.props.currentUser);
+      mixpanel.people.set({
+        $email: currentUser.email ? currentUser.email : 'none'
+      });
+    }
     const options = this.props.lists.map(list => {
       return <option key={list._id} data-key={list._id}>{list.name}</option>;
     });
@@ -145,7 +152,7 @@ class App extends Component {
             <input
               type="text"
               placeholder="Type to add new tasks"
-              value= {this.state.taskName}
+              value={this.state.taskName}
               onChange={this.handleChangeTaskText.bind(this)}
             />
           </form> :
