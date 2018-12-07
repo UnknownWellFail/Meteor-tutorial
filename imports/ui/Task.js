@@ -43,6 +43,7 @@ class Task extends Component {
   render() {
     // Give tasks a different className when they are checked off,
     // so that we can style them nicely in CSS
+    const { userAuthorised } = this.props.userAuthorised;
     const taskClassName = classnames({
       checked: this.props.task.checked,
       private: this.props.task.private,
@@ -50,7 +51,7 @@ class Task extends Component {
 
     return (
       <li className={taskClassName}>
-        {this.props.userAuthorised && this.props.googleUser ? (
+        {userAuthorised && this.props.googleUser ? (
           <input
             type="checkbox"
             readOnly
@@ -60,13 +61,13 @@ class Task extends Component {
           />
         ) : ''}
 
-        {this.props.userAuthorised ? (
+        {userAuthorised ? (
           <button className="delete" onClick={this.deleteThisTask.bind(this)}>
             &times;
           </button>) :
           ''}
 
-        {this.props.userAuthorised ? (
+        {userAuthorised ? (
           <input
             type="checkbox"
             readOnly

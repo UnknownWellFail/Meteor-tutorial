@@ -12,7 +12,6 @@ import { findDate } from '../api/dueDates.js';
 
 // App component - represents the whole app1
 class App extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -116,6 +115,7 @@ class App extends Component {
       return <option key={list._id} data-key={list._id}>{list.name}</option>;
     });
     options.unshift(<option key="-1" data-key="-1">All tasks</option>);
+
     return (
       <div className="container">
         <TaskList
