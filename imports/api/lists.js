@@ -2,12 +2,12 @@ import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
-import { getFullDay } from '../utils/';
+import { getFullDay } from '../utils';
 
 export const Lists = new Mongo.Collection('lists');
 
 export const getListName = listId => {
-  const list = Lists.findOne(listId,{ fields:{ name: 1 } });
+  const list = Lists.findOne(listId, { fields: { name: 1 } });
   return list && list.name;
 };
 
@@ -33,7 +33,7 @@ export const hasAccessToList = ({ listId, userId, roles }) => {
     _id: listId,
     $or: [
       { owner: userId },
-      { 'users._id': userId }
+      { 'users._id': userId },
     ]
   });
 
@@ -59,9 +59,9 @@ if (Meteor.isServer) {
           },
           {
             'users._id': this.userId
-          }]
-        /* eslint-enable*/
-      }
+          }],
+          /* eslint-enable  */
+      },
     );
   });
 

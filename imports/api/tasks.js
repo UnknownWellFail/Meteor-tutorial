@@ -16,7 +16,7 @@ export const getTodayTasks = userId => {
     {
       owner: userId,
       createdAt: { $gte: date.start, $lte: date.end },
-    }
+    },
   ).fetch();
 };
 
@@ -32,8 +32,8 @@ if (Meteor.isServer) {
           {
              owner: this.userId 
           }]
-          /* eslint-enable*/
-      }
+          /* eslint-enable */
+      },
     );
   });
 

@@ -10,9 +10,12 @@ const addDaysToCurrDate = days => {
 };
 
 const clearLine = text => {
-  for (const comp of textComponents) {
-    text = text.replace(comp, '');
+  textComponents.map(component => {
+    text = text.replace(component, '');
+    return component;
   }
+  );
+
   text = text.replace(/\s/g, '');
   return text;
 };
@@ -27,7 +30,7 @@ const dateWords = [
 
 const timeRegex = [
   /\d{2}[:]\d{2}/,
-  /\d{1}[:]\d{2}/
+  /\d{1}[:]\d{2}/,
 ];
 
 const findWordTime = text => {
@@ -50,7 +53,7 @@ const findTime = text => {
       break;
     }
   }
-  if (time === null){
+  if (time === null) {
     return null;
   }
 
@@ -60,7 +63,7 @@ const findTime = text => {
 
   date.setHours(hours, minutes);
 
-  return { text: text.replace(time, ''), date: date };
+  return { text: text.replace(time, ''), date };
 };
 
 export const findDate = text => {

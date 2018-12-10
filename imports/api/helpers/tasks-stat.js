@@ -13,21 +13,22 @@ export const getNewListsWithTasks = userId => {
 };
 
 export const getPopularList = userId => {
-  const tasks = getTodayTasks(userId);
+  let tasks = getTodayTasks(userId);
 
   const listsTasksCount = [];
-  for (const task of tasks) {
-    if (!task.listId) {
-      continue;
-    }
+  tasks = tasks.filter(task => task.listId);
+
+  tasks.map(task => {
     const index = listsTasksCount.findIndex(list => list._id === task.listId);
     if (index === -1) {
       listsTasksCount[listsTasksCount.length] = { _id: task.listId, count: 1 };
     } else {
       listsTasksCount[index].count += 1;
     }
-  }
-  const sortedListsTasksCount = _.sortBy(listsTasksCount, [function(list) { return -list.count; }]);
+    return task;
+  });
+
+  const sortedListsTasksCount = _.sortBy(listsTasksCount, [list => -list.count]);
 
   const popular = sortedListsTasksCount[0];
   if (popular) {
