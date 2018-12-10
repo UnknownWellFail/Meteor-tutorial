@@ -7,7 +7,7 @@ import { Lists } from '../imports/api/lists.js';
 import { addStatCron } from '../imports/api/helpers/stat-cron';
 
 Meteor.startup( () => {
-  process.env.MAIL_URL = Meteor.settings.private.MAIL_URL;
+  process.env.MAIL_URL = Meteor.settings.public.MAIL_URL;
   addStatCron();
 });
 

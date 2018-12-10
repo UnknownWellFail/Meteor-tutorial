@@ -1,0 +1,6 @@
+{
+  "public": {
+    "MAIL_URL": "smtp://mctestemail@yandex.ru:mctestemailpassword@smtp.yandex.ru:587/",
+    "cron_period": "00 00 21 * * *"
+  }
+}
