@@ -1,4 +1,4 @@
-export const getTodayDate = () => {
+const getTodayDate = () => {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
 
@@ -7,3 +7,5 @@ export const getTodayDate = () => {
 
   return { start, end };
 };
+
+export default getTodayDate;
