@@ -5,8 +5,7 @@ import { HTTP } from 'meteor/http';
 
 import { findDate } from './dueDates';
 import { hasAccessToList } from './lists';
-import { getTodayDate } from '../utils/';
-import { setLastUserActive } from '../utils/';
+import { getTodayDate,setLastUserActive } from '../utils/';
 
 export const Tasks = new Mongo.Collection('tasks');
 

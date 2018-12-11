@@ -20,5 +20,5 @@ export const addStatCron = () => {
       return user;
     });
   };
-  new CronJob(Meteor.settings.public.cron_period, job).start();
+  new CronJob(Meteor.settings.cron_period, job).start();
 };
