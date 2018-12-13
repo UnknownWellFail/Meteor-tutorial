@@ -44,13 +44,15 @@ class Task extends Component {
     // Give tasks a different className when they are checked off,
     // so that we can style them nicely in CSS
     const userAuthorised = this.props.userAuthorised;
+    const googleUser = this.props.googleUser;
+
     const taskClassName = classnames({
       checked: this.props.task.checked,
       private: this.props.task.private,
     });
     return (
       <li className={taskClassName}>
-        {userAuthorised && this.props.googleUser ? (
+        {userAuthorised && googleUser ? (
           <input
             type="checkbox"
             readOnly
