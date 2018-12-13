@@ -12,7 +12,6 @@ import { findDate } from '../api/dueDates.js';
 
 // App component - represents the whole app1
 class App extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -22,7 +21,7 @@ class App extends Component {
     this.listId = -1;
   }
 
-  handleChangeTaskText(event){
+  handleChangeTaskText(event) {
     this.setState({
       taskName: event.target.value
     });
@@ -54,6 +53,7 @@ class App extends Component {
     }
 
     if (sendInsert) {
+      mixpanel.track('TASK_WAS_CREATED',{ task:this.props.task });
       Meteor.call('tasks.insert', text, this.listId);
     }
     // Clear form
@@ -109,12 +109,23 @@ class App extends Component {
     }
     return true;
   }
+  componentDidUpdate(prevProps){
+    if(!prevProps.currentUser && this.props.currentUser){
+      const currentUser = this.props.currentUser;
+      mixpanel.identify(currentUser._id);
+      mixpanel.people.set({
+        name: currentUser.username,
+        $email: currentUser.email ? currentUser.email : 'none'
+      });
+    }
+  }
 
   render() {
     const options = this.props.lists.map(list => {
       return <option key={list._id} data-key={list._id}>{list.name}</option>;
     });
     options.unshift(<option key="-1" data-key="-1">All tasks</option>);
+
     return (
       <div className="container">
         <TaskList
@@ -144,7 +155,7 @@ class App extends Component {
             <input
               type="text"
               placeholder="Type to add new tasks"
-              value= {this.state.taskName}
+              value={this.state.taskName}
               onChange={this.handleChangeTaskText.bind(this)}
             />
           </form> :
