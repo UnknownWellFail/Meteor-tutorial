@@ -13,12 +13,12 @@ class Task extends Component {
 
   deleteThisTask() {
     Meteor.call('tasks.remove', this.props.task._id);
-    mixpanel.track("TASK_WAS_REMOVED",{ task: this.props.task });
+    mixpanel.track("TASK_WAS_REMOVED", { task: this.props.task });
   }
 
   togglePrivate() {
     Meteor.call('tasks.setPrivate', this.props.task._id, !this.props.task.private);
-    mixpanel.track("TASK_WAS_PRIVATE",{ task: this.props.task });
+    mixpanel.track("TASK_WAS_PRIVATE", { task: this.props.task });
   }
 
   addToGoogleCalendar() {
@@ -28,11 +28,11 @@ class Task extends Component {
           alert(error.text);
         }
       });
-      mixpanel.track("TASK_WAS_REMOVED_FROM_GOOGLE",{ task: this.props.task });
+      mixpanel.track("TASK_WAS_REMOVED_FROM_GOOGLE", { task: this.props.task });
     }
     else {
       Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, (error, response) => {
-        mixpanel.track("TASK_WAS_CREATED_IN_GOOGLE",{ task: this.props.task });
+        mixpanel.track("TASK_WAS_CREATED_IN_GOOGLE", { task: this.props.task });
         if (error) {
           alert(error.text);
         }
