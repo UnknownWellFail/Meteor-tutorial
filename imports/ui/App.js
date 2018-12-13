@@ -53,7 +53,7 @@ class App extends Component {
     }
 
     if (sendInsert) {
-      mixpanel.track("task insert");
+      mixpanel.track('TASK_WAS_CREATED',{ task:this.props.task });
       Meteor.call('tasks.insert', text, this.listId);
     }
     // Clear form
@@ -109,16 +109,18 @@ class App extends Component {
     }
     return true;
   }
-
-  render() {
-    const currentUser = this.props.currentUser;
-    if (this.props.currentUser) {
+  componentDidUpdate(prevProps){
+    if(!prevProps.currentUser && this.props.currentUser){
+      const currentUser = this.props.currentUser;
       mixpanel.identify(currentUser._id);
       mixpanel.people.set({
         name: currentUser.username,
         $email: currentUser.email ? currentUser.email : 'none'
       });
     }
+  }
+
+  render() {
     const options = this.props.lists.map(list => {
       return <option key={list._id} data-key={list._id}>{list.name}</option>;
     });

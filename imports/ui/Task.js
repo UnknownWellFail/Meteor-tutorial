@@ -8,17 +8,17 @@ class Task extends Component {
   toggleChecked() {
     // Set the checked property to the opposite of its current value
     Meteor.call('tasks.setChecked', this.props.task._id, !this.props.task.checked);
-    mixpanel.track("Checked task");
+    mixpanel.track("TASK_WAS_CHECKED", { task: this.props.task });
   }
 
   deleteThisTask() {
     Meteor.call('tasks.remove', this.props.task._id);
-    mixpanel.track("Remove task");
+    mixpanel.track("TASK_WAS_REMOVED",{ task: this.props.task });
   }
 
   togglePrivate() {
     Meteor.call('tasks.setPrivate', this.props.task._id, !this.props.task.private);
-    mixpanel.track("Set task is private/public");
+    mixpanel.track("TASK_WAS_PRIVATE",{ task: this.props.task });
   }
 
   addToGoogleCalendar() {
@@ -28,11 +28,11 @@ class Task extends Component {
           alert(error.text);
         }
       });
-      mixpanel.track("Remove from google calendar");
+      mixpanel.track("TASK_WAS_REMOVED_FROM_GOOGLE",{ task: this.props.task });
     }
     else {
       Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, (error, response) => {
-        mixpanel.track("Add to google calendar");
+        mixpanel.track("TASK_WAS_CREATED_IN_GOOGLE",{ task: this.props.task });
         if (error) {
           alert(error.text);
         }
@@ -43,7 +43,7 @@ class Task extends Component {
   render() {
     // Give tasks a different className when they are checked off,
     // so that we can style them nicely in CSS
-    const userAuthorised  = this.props.userAuthorised;
+    const userAuthorised = this.props.userAuthorised;
     const taskClassName = classnames({
       checked: this.props.task.checked,
       private: this.props.task.private,
@@ -77,7 +77,7 @@ class Task extends Component {
 
         {this.props.showPrivateButton ? (
           <button className="toggle-private" onClick={this.togglePrivate.bind(this)}>
-            {this.props.task.private ? 'Public' : 'Private' }
+            {this.props.task.private ? 'Public' : 'Private'}
           </button>
         ) : ''}
 

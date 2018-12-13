@@ -4,79 +4,19 @@ import { check } from 'meteor/check';
 import { HTTP } from 'meteor/http';
 
 import { findDate } from './dueDates';
-import { hasAccessToList, createdToday, getListName } from './lists';
-import { getTodayDate } from '../utils/utils';
+import { hasAccessToList } from './lists';
+import { getTodayDate,setLastUserActive } from '../utils/';
 
 export const Tasks = new Mongo.Collection('tasks');
 
-export const countNewCheckedTasks = userId => {
+export const getTodayTasks = userId => {
   const date = getTodayDate();
-
-  const tasks = Tasks.find(
+  return Tasks.find(
     {
       owner: userId,
-      createdAt: { $gte: date.start, $lt: date.end },
-      checked: true,
-    }
-  ).count();
-
-  return tasks;
-};
-
-export const countListsWithTasks = userId => {
-  const date = getTodayDate();
-
-  const tasks = Tasks.find(
-    {
-      owner: userId,
-      createdAt: { $gte: date.start, $lt: date.end },
-    }
+      createdAt: { $gte: date.start, $lte: date.end },
+    },
   ).fetch();
-
-  let lists = tasks.map(task => task.listId);
-
-  lists = lists.filter( (item, pos) => {
-    return item && lists.indexOf(item) === pos;
-  });
-
-  return createdToday({ listsIds: lists });
-};
-
-export const getPopularList = userId => {
-  const date = getTodayDate();
-  const tasks = Tasks.find(
-    {
-      owner: userId,
-      createdAt: { $gte: date.start, $lt: date.end },
-    }
-  ).fetch();
-
-  const listIds = [];
-  for(const task of tasks) {
-    if(!task.listId){
-      continue;
-    }
-    const index = listIds.findIndex(list => list.id === task.listId);
-    if(index === -1) {
-      listIds[listIds.length] = { id: task.listId, count: 1 };
-    } else {
-      listIds[index].count += 1;
-    }
-  }
-
-  listIds.sort( (first, second) => {
-    if(first > second) {
-      return 1;
-    }
-    if(first < second) {
-      return -1;
-    }
-  });
-  const popular = listIds[0];
-  if(popular) {
-    return getListName(popular.id);
-  }
-  return 'None';
 };
 
 if (Meteor.isServer) {
@@ -91,8 +31,8 @@ if (Meteor.isServer) {
           {
              owner: this.userId 
           }]
-          /* eslint-enable*/
-      }
+          /* eslint-enable */
+      },
     );
   });
 
@@ -119,6 +59,7 @@ if (Meteor.isServer) {
       if (listId !== '-1' && !hasAccessToList({ listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('Access denied');
       }
+      setLastUserActive(this.userId);
 
       Tasks.insert({
         text,
@@ -132,6 +73,7 @@ if (Meteor.isServer) {
     },
     'tasks.remove.list'(listId) {
       check(listId, String);
+      setLastUserActive(this.userId);
       Tasks.remove({
         listId: listId
       });
@@ -152,6 +94,8 @@ if (Meteor.isServer) {
       if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('Access denied');
       }
+
+      setLastUserActive(this.userId);
 
       Tasks.remove({
         _id: taskId,
@@ -179,6 +123,8 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Access denied');
       }
 
+      setLastUserActive(this.userId);
+
       Tasks.update({
         _id: taskId,
         $or: [
@@ -204,6 +150,7 @@ if (Meteor.isServer) {
       if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('Access denied');
       }
+      setLastUserActive(this.userId);
 
       Tasks.update(taskId, { $set: { private: isPrivate } });
     },
@@ -257,6 +204,8 @@ if (Meteor.isServer) {
             reject(error);
           }
           if (result) {
+            setLastUserActive(this.userId);
+
             Tasks.update(taskId, { $set: { googleEventId: result.data.id, disabled: false } });
             resolve();
           }
@@ -313,6 +262,7 @@ if (Meteor.isServer) {
             reject(error);
           }
           else {
+            setLastUserActive(this.userId);
             resolve();
           }
         });

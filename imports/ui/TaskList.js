@@ -25,7 +25,7 @@ class TaskList extends Component {
     }
     else {
       Meteor.call('lists.create', text);
-      mixpanel.track("Create task list");
+      mixpanel.track("TASK_LIST_WAS_CREATED",{ listName: text });
     }
 
     this.setState({ listName: '' });
@@ -41,7 +41,7 @@ class TaskList extends Component {
       if (error) {
         alert(error);
       }
-      mixpanel.track("Remove task list");
+      mixpanel.track("TASK_LIST_WAS_REMOVED");
     });
   }
 

@@ -2,24 +2,22 @@ import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
-import { getTodayDate } from '../utils/utils';
+import { getFullDay } from '../utils';
 
 export const Lists = new Mongo.Collection('lists');
 
 export const getListName = listId => {
-  const list = Lists.findOne(listId);
-  if(list) {
-    return list.name;
-  }
+  const list = Lists.findOne(listId, { fields: { name: 1 } });
+  return list && list.name;
 };
 
-export const createdToday = ({ listsIds }) => {
-  const date = getTodayDate();
+export const getListsByDate = ({ listsIds, date }) => {
+  const day = getFullDay(date);
 
   const count = Lists.find(
     {
       _id: { $in: listsIds },
-      createdAt: { $gte: date.start, $lt: date.end },
+      createdAt: { $gte: day.start, $lte: day.end },
     }
   ).count();
 
@@ -27,7 +25,7 @@ export const createdToday = ({ listsIds }) => {
 };
 
 export const hasAccessToList = ({ listId, userId, roles }) => {
-  if(!listId){
+  if (!listId) {
     return true;
   }
 
@@ -35,7 +33,7 @@ export const hasAccessToList = ({ listId, userId, roles }) => {
     _id: listId,
     $or: [
       { owner: userId },
-      { 'users._id': userId }
+      { 'users._id': userId },
     ]
   });
 
@@ -56,14 +54,14 @@ if (Meteor.isServer) {
       {
         $or: [
           /* eslint-disable*/
-          { 
-            owner: this.userId 
+          {
+            owner: this.userId
           },
           {
             'users._id': this.userId
-          }]
-          /* eslint-enable*/
-      }
+          }],
+          /* eslint-enable  */
+      },
     );
   });
 
@@ -128,7 +126,6 @@ if (Meteor.isServer) {
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
       }
-
 
       Lists.update(
         {
