@@ -5,6 +5,7 @@ import { HTTP } from 'meteor/http';
 
 import { findDate } from './dueDates';
 import { hasAccessToList } from './lists';
+import { s3 } from './aws-conf';
 import { getTodayDate, setLastUserActive, getUrlParams } from '../utils/';
 
 
@@ -21,7 +22,6 @@ export const getTodayTasks = userId => {
 };
 
 if (Meteor.isServer) {
-  import { s3 } from '../../server/aws-conf';
   Meteor.publish('tasks', function tasksPublconsication() {
     return Tasks.find(
       {
