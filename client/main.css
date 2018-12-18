@@ -79,6 +79,10 @@ form {
 .task-list-name{
   float: right;
 }
+.task_image{
+  width: 20%;
+  height: 20%;
+}
 ul {
   margin: 0;
   padding: 0;
@@ -104,7 +108,7 @@ li {
 li .text {
   margin-left: 10px;
 }
- 
+
 li.checked {
   color: #888;
 }
