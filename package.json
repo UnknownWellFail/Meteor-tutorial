@@ -9,8 +9,12 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.0.0",
+    "aws-sdk": "^2.376.0",
     "bcrypt": "^3.0.2",
     "classnames": "^2.2.6",
+    "cron": "^1.6.0",
+    "eslint": "^5.10.0",
+    "lodash": "^4.17.11",
     "meteor-node-stubs": "^0.4.1",
     "react": "^16.6.3",
     "react-addons-css-transition-group": "^15.6.2",
@@ -24,6 +28,9 @@
     "testModule": "tests/main.js"
   },
   "devDependencies": {
-    "chai": "^4.2.0"
+    "babel-eslint": "^10.0.1",
+    "chai": "^4.2.0",
+    "eslint-plugin-meteor": "^5.1.0",
+    "eslint-plugin-react": "^7.11.1"
   }
 }
