@@ -52,7 +52,11 @@ class Task extends Component {
     const reader = new FileReader();
     const taskId = this.props.task._id;
     reader.onload = function (fileLoadEvent) {
-      Meteor.call('tasks.addImages', taskId, file.name, reader.result);
+      Meteor.call('tasks.addImage', taskId, file.name, reader.result, (error, response) => {
+        if (error) {
+          alert(error);
+        }
+      });
     };
     reader.readAsBinaryString(file);
   }
@@ -66,9 +70,9 @@ class Task extends Component {
     const task = this.props.task;
     let imagesUrls;
 
-    if(task.images){
+    if (task.images) {
       imagesUrls = task.images.map(item => {
-        return <img className = "task_image" key = {item.url} src={item.url}></img>;
+        return <img className="task_image" key={item.url} src={item.url} />;
       });
     }
     const taskClassName = classnames({
@@ -101,7 +105,7 @@ class Task extends Component {
             onClick={this.toggleChecked.bind(this)}
           />
         ) : ''}
-        { imagesUrls }
+        {imagesUrls}
         {this.props.showPrivateButton ? (
           <button className="toggle-private" onClick={this.togglePrivate.bind(this)}>
             {this.props.task.private ? 'Public' : 'Private'}

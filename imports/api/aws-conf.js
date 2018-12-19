@@ -1,9 +1,8 @@
 import aws from 'aws-sdk';
 
-aws.config.update({
-  secretAccessKey: Meteor.settings.secretAccessKey,
-  accessKeyId: Meteor.settings.accessKeyId,
-  region: 'us-east-1',
-});
+export let s3 = new aws.S3({ params: { Bucket: process.env.BUCKET } });
+export const setS3 = () => {
+  s3 = new aws.S3({ params: { Bucket: process.env.BUCKET } });
+};
 
-export const s3 = new aws.S3({ params: { Bucket: 'meteor-test-todo-1' } });
+export const getS3 = () => s3;

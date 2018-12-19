@@ -13,6 +13,7 @@
     "bcrypt": "^3.0.2",
     "classnames": "^2.2.6",
     "cron": "^1.6.0",
+    "dotenv": "^6.2.0",
     "eslint": "^5.10.0",
     "lodash": "^4.17.11",
     "meteor-node-stubs": "^0.4.1",

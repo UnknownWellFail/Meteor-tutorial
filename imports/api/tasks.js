@@ -5,7 +5,7 @@ import { HTTP } from 'meteor/http';
 
 import { findDate } from './dueDates';
 import { hasAccessToList } from './lists';
-import { s3 } from './aws-conf';
+import { getS3 } from './aws-conf';
 import { getTodayDate, setLastUserActive, getUrlParams } from '../utils/';
 
 
@@ -214,7 +214,7 @@ if (Meteor.isServer) {
         });
       });
     },
-    'tasks.addImages'(taskId, fileName, fileData) {
+    'tasks.addImage'(taskId, fileName, fileData) {
       check(taskId, String);
       check(fileName, String);
       check(fileData, String);
@@ -239,21 +239,22 @@ if (Meteor.isServer) {
         Body: base64data,
         ACL: 'private',
       };
-
+      const s3 = getS3();
       const bound = Meteor.bindEnvironment(callback => { callback(); });
-
       s3.putObject(data, (err, data) => {
         if (err) {
           console.log('Error uploading data');
         } else {
           console.log('succesfully uploaded the image!');
-          s3.getSignedUrl('getObject', { Bucket: 'meteor-test-todo-1', Key: fileName }, (err, res) => {
-            if (res) {
-              const urlParams = getUrlParams(res);
-              bound( ()=> {
-                Tasks.update(taskId, { $push: { images: { fileName: fileName, url:res, expires: urlParams.Expires } } });
-              });
-            }
+          s3.getSignedUrl('getObject', { Bucket: Meteor.settings.bucket, Key: fileName }, (err, res) => {
+            bound( () => {
+              if (res) {
+                const urlParams = getUrlParams(res);
+                Tasks.update(taskId, { $push: { images: { fileName, url: res, expires: urlParams.Expires } } });
+              }else {
+                throw new Meteor.Error('Error in process loading file');
+              }
+            });
           });
         }
       });
@@ -298,7 +299,7 @@ if (Meteor.isServer) {
         },
       };
 
-      return new Promise( (resolve, reject) => {
+      return new Promise((resolve, reject) => {
         HTTP.del('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.googleEventId, dataObject, (error, result) => {
           Tasks.update(taskId, {
             $unset: { googleEventId: "" },
