@@ -5,7 +5,9 @@ import { HTTP } from 'meteor/http';
 
 import { findDate } from './dueDates';
 import { hasAccessToList } from './lists';
-import { getTodayDate,setLastUserActive } from '../utils/';
+import { getS3 } from './aws-conf';
+import { getTodayDate, setLastUserActive, getUrlParams } from '../utils/';
+
 
 export const Tasks = new Mongo.Collection('tasks');
 
@@ -25,13 +27,13 @@ if (Meteor.isServer) {
       {
         $or: [
           /* eslint-disable*/
-          { 
-            private: { $ne: true } 
+          {
+            private: { $ne: true }
           },
           {
-             owner: this.userId 
+            owner: this.userId
           }]
-          /* eslint-enable */
+        /* eslint-enable */
       },
     );
   });
@@ -197,7 +199,7 @@ if (Meteor.isServer) {
           }
         }
       };
-      return new Promise( (resolve, reject) => {
+      return new Promise((resolve, reject) => {
         HTTP.post('https://www.googleapis.com/calendar/v3/calendars/primary/events', dataObject, (error, result) => {
           if (error) {
             Tasks.update(taskId, { $set: { disabled: false } });
@@ -210,6 +212,51 @@ if (Meteor.isServer) {
             resolve();
           }
         });
+      });
+    },
+    'tasks.addImage'(taskId, fileName, fileData) {
+      check(taskId, String);
+      check(fileName, String);
+      check(fileData, String);
+
+      if (!this.userId) {
+        throw new Meteor.Error('Access denied');
+      }
+      const task = Tasks.findOne(taskId);
+
+      if (!task) {
+        throw new Meteor.Error('Task not found');
+      }
+
+      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
+        throw new Meteor.Error('Access denied');
+      }
+      fileName = `f${(+new Date).toString(16)}` + fileName;
+
+      const base64data = new Buffer(fileData, 'binary');
+      const data = {
+        Key: fileName,
+        Body: base64data,
+        ACL: 'private',
+      };
+      const s3 = getS3();
+      const bound = Meteor.bindEnvironment(callback => { callback(); });
+      s3.putObject(data, (err, data) => {
+        if (err) {
+          console.log('Error uploading data');
+        } else {
+          console.log('succesfully uploaded the image!');
+          s3.getSignedUrl('getObject', { Bucket: Meteor.settings.bucket, Key: fileName }, (err, res) => {
+            bound( () => {
+              if (res) {
+                const urlParams = getUrlParams(res);
+                Tasks.update(taskId, { $push: { images: { fileName, url: res, expires: urlParams.Expires } } });
+              }else {
+                throw new Meteor.Error('Error in process loading file');
+              }
+            });
+          });
+        }
       });
     },
     'tasks.removeFromGoogleCalendar'(taskId) {
@@ -252,13 +299,13 @@ if (Meteor.isServer) {
         },
       };
 
-      return new Promise( (resolve, reject) => {
+      return new Promise((resolve, reject) => {
         HTTP.del('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.googleEventId, dataObject, (error, result) => {
           Tasks.update(taskId, {
             $unset: { googleEventId: "" },
             $set: { disabled: false }
           });
-          if (error){
+          if (error) {
             reject(error);
           }
           else {

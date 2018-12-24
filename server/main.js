@@ -1,14 +1,26 @@
 import { Meteor } from 'meteor/meteor';
 import { Accounts } from 'meteor/accounts-base';
+import aws from 'aws-sdk';
+import dotenv from 'dotenv';
 
 import '../imports/api/tasks.js';
 import '../imports/api/lists.js';
 import { Lists } from '../imports/api/lists.js';
 import { addStatCron } from '../imports/api/helpers/stat-cron';
+import { setS3 } from '../imports/api/aws-conf';
+
+dotenv.config({ path: process.env.PWD + "/.env" });
+
+aws.config.update({
+  secretAccessKey: process.env.ACCESS_SECRET_KEY,
+  accessKeyId: process.env.ACCESS_KEY_ID,
+  region: 'us-east-1',
+});
+
 
 Meteor.startup( () => {
-  process.env.MAIL_URL = Meteor.settings.MAIL_URL;
   addStatCron();
+  setS3();
 });
 
 if (Meteor.isServer) {

@@ -40,12 +40,41 @@ class Task extends Component {
     }
   }
 
+  changeFile(event) {
+    const file = event.target.files[0];
+    this.setState({
+      file,
+    });
+  }
+
+  uploadFile() {
+    const file = this.state.file;
+    const reader = new FileReader();
+    const taskId = this.props.task._id;
+    reader.onload = function (fileLoadEvent) {
+      Meteor.call('tasks.addImage', taskId, file.name, reader.result, (error, response) => {
+        if (error) {
+          alert(error);
+        }
+      });
+    };
+    reader.readAsBinaryString(file);
+  }
+
   render() {
     // Give tasks a different className when they are checked off,
     // so that we can style them nicely in CSS
     const userAuthorised = this.props.userAuthorised;
     const googleUser = this.props.googleUser;
 
+    const task = this.props.task;
+    let imagesUrls;
+
+    if (task.images) {
+      imagesUrls = task.images.map(item => {
+        return <img className="task_image" key={item.url} src={item.url} />;
+      });
+    }
     const taskClassName = classnames({
       checked: this.props.task.checked,
       private: this.props.task.private,
@@ -76,7 +105,7 @@ class Task extends Component {
             onClick={this.toggleChecked.bind(this)}
           />
         ) : ''}
-
+        {imagesUrls}
         {this.props.showPrivateButton ? (
           <button className="toggle-private" onClick={this.togglePrivate.bind(this)}>
             {this.props.task.private ? 'Public' : 'Private'}
@@ -86,6 +115,9 @@ class Task extends Component {
         <span className="text">
           <strong>{this.props.task.username}</strong>: {this.props.task.text} <strong className="task-list-name">{this.props.listName}</strong>
         </span>
+
+        <input onChange={this.changeFile.bind(this)} type="file" />
+        <button onClick={this.uploadFile.bind(this)}>Send</button>
 
       </li>
     );
