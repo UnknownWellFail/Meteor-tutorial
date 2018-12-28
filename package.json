@@ -19,7 +19,9 @@
     "meteor-node-stubs": "^0.4.1",
     "react": "^16.6.3",
     "react-addons-css-transition-group": "^15.6.2",
-    "react-dom": "^16.6.3"
+    "react-dom": "^16.6.3",
+    "react-stripe-elements": "^2.0.1",
+    "stripe": "^6.20.0"
   },
   "meteor": {
     "mainModule": {

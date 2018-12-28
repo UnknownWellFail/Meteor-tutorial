@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 
 import '../imports/api/tasks.js';
 import '../imports/api/lists.js';
+import '../imports/api/payments.js';
 import { Lists } from '../imports/api/lists.js';
 import { addStatCron } from '../imports/api/helpers/stat-cron';
 import { setS3 } from '../imports/api/aws-conf';
@@ -16,7 +17,6 @@ aws.config.update({
   accessKeyId: process.env.ACCESS_KEY_ID,
   region: 'us-east-1',
 });
-
 
 Meteor.startup( () => {
   addStatCron();
