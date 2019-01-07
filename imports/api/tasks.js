@@ -29,7 +29,7 @@ const getTasksCountByUserId = userId => {
 };
 
 if (Meteor.isServer) {
-  Meteor.publish('tasks', ()=> {
+  Meteor.publish('tasks', () => {
     return Tasks.find(
       {
         $or: [

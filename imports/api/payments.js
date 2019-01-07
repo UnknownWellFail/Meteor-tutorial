@@ -21,14 +21,14 @@ export const setPaymentUsed = (chargeId, used) => {
   Payments.update({
     userId: this.userId,
     chargeId
-  },{ $set : { used } });
+  },{ $set: { used } });
  /* eslint-enable */
 };
 
 if (Meteor.isServer) {
   import { stripe } from '../../server/main';
   /* eslint-disable*/
-  Meteor.publish('payments.my', ()=> {
+  Meteor.publish('payments.my', () => {
     return Payments.find(
       {
         userId: this.userId

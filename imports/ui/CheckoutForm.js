@@ -5,13 +5,12 @@ import { Meteor } from 'meteor/meteor';
 class CheckoutForm extends Component {
   constructor(props) {
     super(props);
-    this.state = { error: '' };
+    this.state = { error: null };
     this.submit = this.submit.bind(this);
   }
 
   async submit() {
     const { token } = await this.props.stripe.createToken({ name: this.props.userName });
-    console.log(this.props.itemName);
     Meteor.call('createCharge', token.id, this.props.itemName, (err, response) => {
       if (response) {
         this.props.handle(response.id);

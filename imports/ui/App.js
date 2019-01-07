@@ -21,7 +21,6 @@ class App extends Component {
       hideCompleted: false,
       taskName: '',
       payment: false,
-      function: null,
       itemName: ''
     };
     this.listId = -1;
@@ -34,7 +33,7 @@ class App extends Component {
   }
 
   showPaymentForm(func, itemName) {
-    this.func = func;
+    this.handleSubmit = func;
     this.setState({
       payment: true,
       itemName: itemName
@@ -90,8 +89,7 @@ class App extends Component {
 
   hidePayment() {
     this.setState({
-      payment: false,
-      function: null
+      payment: false
     });
   }
 
@@ -185,7 +183,7 @@ class App extends Component {
             <div className="example">
               <Elements>
                 <CheckoutForm
-                  handle={this.func}
+                  handle={this.handleSubmit}
                   hide={this.hidePayment.bind(this)}
                   userName={this.props.currentUser.username}
                   itemName={this.state.itemName}

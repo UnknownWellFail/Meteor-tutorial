@@ -57,7 +57,7 @@ export const hasAccessToList = ({ listId, userId, roles }) => {
 };
 
 if (Meteor.isServer) {
-  Meteor.publish('lists', ()=> {
+  Meteor.publish('lists', () => {
     return Lists.find(
       {
         $or: [
@@ -78,7 +78,6 @@ if (Meteor.isServer) {
       check(name, String);
       check(chargeId, String);
 
-      console.log(chargeId);
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
       }
@@ -87,11 +86,11 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Name can`t be empty');
       }
 
-      if (getListsCountByUserId(this.userId) > 2 && !checkUserPayment(chargeId, 'list') ){
+      if (getListsCountByUserId(this.userId) > 2 && !checkUserPayment(chargeId, 'list')){
         throw new Meteor.Error('Invalid payment');
       }
 
-      setPaymentUsed(chargeId,true);
+      setPaymentUsed(chargeId, true);
 
       Lists.insert({
         name,
