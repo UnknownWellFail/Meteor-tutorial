@@ -2,6 +2,7 @@ import { Meteor } from 'meteor/meteor';
 import { Accounts } from 'meteor/accounts-base';
 import aws from 'aws-sdk';
 import dotenv from 'dotenv';
+import { Stripe } from 'stripe';
 
 import '../imports/api/tasks.js';
 import '../imports/api/lists.js';
@@ -17,6 +18,9 @@ aws.config.update({
   accessKeyId: process.env.ACCESS_KEY_ID,
   region: 'us-east-1',
 });
+
+export const stripe = Stripe(process.env.STRIPE_PRIVATE_KEY);
+
 
 Meteor.startup( () => {
   addStatCron();
