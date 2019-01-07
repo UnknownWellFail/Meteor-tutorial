@@ -37,7 +37,7 @@ class Task extends Component {
             mixpanel.track("TASK_WAS_ADDED_TO_GOOGLE", { task: this.props.task });
             Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, chargeId);
           };
-          this.props.showPaymentForm(func);
+          this.props.showPaymentForm(func,'calendar');
         }
       });
     }
@@ -61,7 +61,7 @@ class Task extends Component {
           const func = chargeId => {
             Meteor.call('tasks.addImage', taskId, file.name, reader.result, chargeId);
           };
-          showPaymentForm(func);
+          showPaymentForm(func,'image');
         } else {
           alert(error);
         }

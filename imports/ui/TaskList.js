@@ -29,7 +29,7 @@ class TaskList extends Component {
           const func = chargeId => {
             Meteor.call('lists.create', text, chargeId);
           };
-          this.props.showPaymentForm(func);
+          this.props.showPaymentForm(func,'list');
         }
       });
       mixpanel.track("TASK_LIST_WAS_CREATED", { listName: text });

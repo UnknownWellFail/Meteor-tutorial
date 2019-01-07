@@ -33,11 +33,11 @@ class App extends Component {
     });
   }
 
-  showPaymentForm(func) {
+  showPaymentForm(func, itemName) {
+    this.func = func;
     this.setState({
       payment: true,
-      function: func,
-      itemName: 'tasks'
+      itemName: itemName
     });
   }
 
@@ -73,7 +73,7 @@ class App extends Component {
           const func = chargeId => {
             Meteor.call('tasks.insert', text, this.listId, chargeId);
           };
-          this.showPaymentForm(func);
+          this.showPaymentForm(func,'tasks');
         }
       });
     }
@@ -185,7 +185,7 @@ class App extends Component {
             <div className="example">
               <Elements>
                 <CheckoutForm
-                  handle={this.state.function}
+                  handle={this.func}
                   hide={this.hidePayment.bind(this)}
                   userName={this.props.currentUser.username}
                   itemName={this.state.itemName}

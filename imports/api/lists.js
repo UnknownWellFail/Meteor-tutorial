@@ -78,6 +78,7 @@ if (Meteor.isServer) {
       check(name, String);
       check(chargeId, String);
 
+      console.log(chargeId);
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
       }
