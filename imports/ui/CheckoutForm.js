@@ -15,6 +15,7 @@ class CheckoutForm extends Component {
       if (response) {
         this.props.handle(response.id);
         this.props.hide();
+        this.setState({ error: null });
       } else {
         this.setState({ error: err.message });
       }
