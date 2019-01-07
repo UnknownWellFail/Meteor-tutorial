@@ -31,10 +31,13 @@ class Task extends Component {
       mixpanel.track("TASK_WAS_REMOVED_FROM_GOOGLE", { task: this.props.task });
     }
     else {
-      Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, (error, response) => {
-        mixpanel.track("TASK_WAS_CREATED_IN_GOOGLE", { task: this.props.task });
-        if (error) {
-          alert(error.text);
+      Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, '', (error, response) => {
+        if (error && error.message.includes('Invalid payment') ) {
+          const func = chargeId => {
+            mixpanel.track("TASK_WAS_ADD_TO_GOOGLE", { task: this.props.task });
+            Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, chargeId);
+          };
+          this.props.showPaymentForm(func);
         }
       });
     }
@@ -51,9 +54,15 @@ class Task extends Component {
     const file = this.state.file;
     const reader = new FileReader();
     const taskId = this.props.task._id;
+    const showPaymentForm = this.props.showPaymentForm;
     reader.onload = function (fileLoadEvent) {
-      Meteor.call('tasks.addImage', taskId, file.name, reader.result, (error, response) => {
-        if (error) {
+      Meteor.call('tasks.addImage', taskId, file.name, reader.result, '', (error ,response) => {
+        if (error && error.message.includes('Invalid payment') ) {
+          const func = chargeId => {
+            Meteor.call('tasks.addImage', taskId, file.name, reader.result, chargeId);
+          };
+          showPaymentForm(func);
+        } else {
           alert(error);
         }
       });

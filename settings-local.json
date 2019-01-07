@@ -4,25 +4,25 @@
     "stripe_public_key": "pk_test_gDpCMiRgV1virIAIqFFE9gOd"
   },
   "currency": "usd",
-  "payment" : {
-    "task" : {
-      "title": "Task",
-      "price": 100,
+  "items" : {
+    "tasks" : {
+      "name": "Task",
+      "amount": 100,
       "description": "something"
     },
     "list" : {
-      "title": "List",
-      "price": 1000,
+      "name": "List",
+      "amount": 1000,
       "description": "something"
     },
     "calendar" : {
-      "title": "Calendar",
-      "price": 50,
+      "name": "Calendar",
+      "amount": 50,
       "description": "something"
     },
     "image" : {
-      "title": "Image",
-      "price": 75,
+      "name": "Image",
+      "amount": 75,
       "description": "something"
     }
   }

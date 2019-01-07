@@ -2,13 +2,16 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import { Elements, StripeProvider } from 'react-stripe-elements';
 
+import CheckoutForm from './CheckoutForm';
 import { Tasks } from '../api/tasks.js';
 import Task from './Task.js';
 import TaskList from './TaskList.js';
 import AccountsUIWrapper from './AccountsUIWrapper.js';
 import { Lists } from '../api/lists.js';
 import { findDate } from '../api/dueDates.js';
+
 
 // App component - represents the whole app1
 class App extends Component {
@@ -17,6 +20,9 @@ class App extends Component {
     this.state = {
       hideCompleted: false,
       taskName: '',
+      payment: false,
+      function: null,
+      itemName: ''
     };
     this.listId = -1;
   }
@@ -24,6 +30,14 @@ class App extends Component {
   handleChangeTaskText(event) {
     this.setState({
       taskName: event.target.value
+    });
+  }
+
+  showPaymentForm(func) {
+    this.setState({
+      payment: true,
+      function: func,
+      itemName: 'tasks'
     });
   }
 
@@ -54,15 +68,32 @@ class App extends Component {
 
     if (sendInsert) {
       mixpanel.track('TASK_WAS_CREATED',{ task:this.props.task });
-      Meteor.call('tasks.insert', text, this.listId);
+      Meteor.call('tasks.insert', text, this.listId, '', (error ,response) => {
+        if (error && error.message.includes('Invalid payment') ) {
+          const func = chargeId => {
+            Meteor.call('tasks.insert', text, this.listId, chargeId);
+          };
+          this.showPaymentForm(func);
+        }
+      });
     }
+
     // Clear form
     this.setState({ taskName: '' });
   }
 
+
+
   toggleHideCompleted() {
     this.setState({
       hideCompleted: !this.state.hideCompleted,
+    });
+  }
+
+  hidePayment() {
+    this.setState({
+      payment: false,
+      function: null
     });
   }
 
@@ -95,6 +126,7 @@ class App extends Component {
         userAuthorised={user}
         googleUser={googleUser}
         listName={listName}
+        showPaymentForm={this.showPaymentForm.bind(this)}
       />);
     });
   }
@@ -133,6 +165,7 @@ class App extends Component {
           currentUser={this.props.currentUser}
           setListId={this.setListId.bind(this)}
           listId={this.listId}
+          showPaymentForm={this.showPaymentForm.bind(this)}
         />
         <header>
           <h1>Todo List ({this.props.incompleteCount})</h1>
@@ -149,6 +182,20 @@ class App extends Component {
         </label>
 
         <AccountsUIWrapper />
+        {this.state.payment ?
+          <StripeProvider apiKey="pk_test_gDpCMiRgV1virIAIqFFE9gOd">
+            <div className="example">
+              <Elements>
+                <CheckoutForm 
+                  handle={this.state.function} 
+                  hide={this.hidePayment.bind(this)}
+                  userName={this.props.currentUser.username}
+                  itemName={this.state.itemName}
+                />
+              </Elements>
+            </div>
+          </StripeProvider>
+          : ''}
 
         {this.props.currentUser ?
           <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
