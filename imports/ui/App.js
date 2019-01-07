@@ -68,7 +68,7 @@ class App extends Component {
 
     if (sendInsert) {
       mixpanel.track('TASK_WAS_CREATED',{ task:this.props.task });
-      Meteor.call('tasks.insert', text, this.listId, '', (error ,response) => {
+      Meteor.call('tasks.insert', text, this.listId, '', (error, response) => {
         if (error && error.message.includes('Invalid payment') ) {
           const func = chargeId => {
             Meteor.call('tasks.insert', text, this.listId, chargeId);
