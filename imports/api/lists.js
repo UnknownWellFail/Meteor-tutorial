@@ -3,8 +3,16 @@ import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
 import { getFullDay } from '../utils';
+import { checkUserPayment } from './payments';
+import { setPaymentUsed } from './payments';
 
 export const Lists = new Mongo.Collection('lists');
+
+const getListsCountByUser = userId => {
+  return Lists.find({
+    owner: userId
+  }).count();
+};
 
 export const getListName = listId => {
   const list = Lists.findOne(listId, { fields: { name: 1 } });
@@ -66,8 +74,9 @@ if (Meteor.isServer) {
   });
 
   Meteor.methods({
-    'lists.create'(name) {
+    'lists.create'(name, chargeId) {
       check(name, String);
+      check(chargeId, String);
 
       if (!this.userId) {
         throw new Meteor.Error('Not authorized');
@@ -76,6 +85,12 @@ if (Meteor.isServer) {
       if (name === '') {
         throw new Meteor.Error('Name can`t be empty');
       }
+
+      if (getListsCountByUser(this.userId) > 2 && !checkUserPayment(chargeId, 'list') ){
+        throw new Meteor.Error('Invalid payment');
+      }
+
+      setPaymentUsed(chargeId,true);
 
       Lists.insert({
         name,

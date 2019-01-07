@@ -7,7 +7,8 @@ import { findDate } from './dueDates';
 import { hasAccessToList } from './lists';
 import { getS3 } from './aws-conf';
 import { getTodayDate, setLastUserActive, getUrlParams } from '../utils/';
-
+import { checkUserPayment } from './payments';
+import { setPaymentUsed } from './payments';
 
 export const Tasks = new Mongo.Collection('tasks');
 
@@ -19,6 +20,12 @@ export const getTodayTasks = userId => {
       createdAt: { $gte: date.start, $lte: date.end },
     },
   ).fetch();
+};
+
+const getTasksCountByUser = userId => {
+  return Tasks.find({
+    owner: userId
+  }).count();
 };
 
 if (Meteor.isServer) {
@@ -39,9 +46,10 @@ if (Meteor.isServer) {
   });
 
   Meteor.methods({
-    'tasks.insert'(text, listId) {
+    'tasks.insert'(text, listId, chargeId) {
       check(text, String);
       check(listId, String);
+      check(chargeId, String);
 
       // Make sure the user is logged in before inserting a task
       if (!this.userId) {
@@ -61,7 +69,14 @@ if (Meteor.isServer) {
       if (listId !== '-1' && !hasAccessToList({ listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('Access denied');
       }
+
+      if (getTasksCountByUser(this.userId) > 9 && !checkUserPayment(chargeId, 'tasks') ){
+        throw new Meteor.Error('Invalid payment');
+      }
+
       setLastUserActive(this.userId);
+
+      setPaymentUsed(chargeId,true);
 
       Tasks.insert({
         text,
@@ -156,8 +171,9 @@ if (Meteor.isServer) {
 
       Tasks.update(taskId, { $set: { private: isPrivate } });
     },
-    'tasks.addToGoogleCalendar'(taskId) {
+    'tasks.addToGoogleCalendar'(taskId, chargeId) {
       check(taskId, String);
+      check(chargeId, String);
 
       const task = Tasks.findOne(taskId);
 
@@ -182,6 +198,10 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Only google authorized');
       }
 
+      if (!checkUserPayment(chargeId, 'calendar') ){
+        throw new Meteor.Error('Invalid payment');
+      }
+
       Tasks.update(taskId, { $set: { disabled: true } });
 
       const dataObject = {
@@ -199,13 +219,14 @@ if (Meteor.isServer) {
           }
         }
       };
-      return new Promise((resolve, reject) => {
+      return new Promise( (resolve, reject) => {
         HTTP.post('https://www.googleapis.com/calendar/v3/calendars/primary/events', dataObject, (error, result) => {
           if (error) {
             Tasks.update(taskId, { $set: { disabled: false } });
             reject(error);
           }
           if (result) {
+            setPaymentUsed(chargeId,true);
             setLastUserActive(this.userId);
 
             Tasks.update(taskId, { $set: { googleEventId: result.data.id, disabled: false } });
@@ -214,10 +235,11 @@ if (Meteor.isServer) {
         });
       });
     },
-    'tasks.addImage'(taskId, fileName, fileData) {
+    'tasks.addImage'(taskId, fileName, fileData, chargeId) {
       check(taskId, String);
       check(fileName, String);
       check(fileData, String);
+      check(chargeId, String);
 
       if (!this.userId) {
         throw new Meteor.Error('Access denied');
@@ -231,6 +253,13 @@ if (Meteor.isServer) {
       if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('Access denied');
       }
+
+      if (!checkUserPayment(chargeId, 'image') ){
+        throw new Meteor.Error('Invalid payment');
+      }
+
+      setPaymentUsed(chargeId,true);
+
       fileName = `f${(+new Date).toString(16)}` + fileName;
 
       const base64data = new Buffer(fileData, 'binary');
@@ -299,7 +328,7 @@ if (Meteor.isServer) {
         },
       };
 
-      return new Promise((resolve, reject) => {
+      return new Promise( (resolve, reject) => {
         HTTP.del('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.googleEventId, dataObject, (error, result) => {
           Tasks.update(taskId, {
             $unset: { googleEventId: "" },
