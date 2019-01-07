@@ -2,8 +2,6 @@ import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
-
-
 export const Payments = new Mongo.Collection('payments');
 
 export const checkUserPayment = (chargeId, title) => {
@@ -30,7 +28,7 @@ export const setPaymentUsed = (chargeId, used) => {
 if (Meteor.isServer) {
   import { stripe } from '../../server/main';
   /* eslint-disable*/
-  Meteor.publish('payments.my', function paymentsList() {
+  Meteor.publish('payments.my', ()=> {
     return Payments.find(
       {
         userId: this.userId
@@ -40,7 +38,7 @@ if (Meteor.isServer) {
   });
 
   Meteor.methods({
-    'createCharge'(token, itemName){
+    createCharge: async function (token, itemName) {
       check(token, String);
       check(itemName, String);
 
@@ -58,24 +56,22 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Item not found');
       }
 
-      const charge = stripe.charges.create({
+      const charge = await stripe.charges.create({
         amount: item.amount,
         currency: Meteor.settings.currency,
         description: item.description,
         source: token,
       });
 
-      charge.then(res => {
-        if(res){
-          Payments.insert({
-            userId: this.userId,
-            value: item.amount,
-            title: itemName,
-            chargeId: res.id,
-            used: false
-          });
-        }
-      });
+      if(charge){
+        Payments.insert({
+          userId: this.userId,
+          value: item.amount,
+          title: itemName,
+          chargeId: charge.id,
+          used: false
+        });
+      }
 
       return charge;
     },

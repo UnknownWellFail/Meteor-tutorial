@@ -34,7 +34,7 @@ class Task extends Component {
       Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, '', (error, response) => {
         if (error && error.message.includes('Invalid payment') ) {
           const func = chargeId => {
-            mixpanel.track("TASK_WAS_ADD_TO_GOOGLE", { task: this.props.task });
+            mixpanel.track("TASK_WAS_ADDED_TO_GOOGLE", { task: this.props.task });
             Meteor.call('tasks.addToGoogleCalendar', this.props.task._id, chargeId);
           };
           this.props.showPaymentForm(func);

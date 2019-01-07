@@ -22,14 +22,14 @@ export const getTodayTasks = userId => {
   ).fetch();
 };
 
-const getTasksCountByUser = userId => {
+const getTasksCountByUserId = userId => {
   return Tasks.find({
     owner: userId
   }).count();
 };
 
 if (Meteor.isServer) {
-  Meteor.publish('tasks', function tasksPublconsication() {
+  Meteor.publish('tasks', ()=> {
     return Tasks.find(
       {
         $or: [
@@ -70,13 +70,13 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Access denied');
       }
 
-      if (getTasksCountByUser(this.userId) > 9 && !checkUserPayment(chargeId, 'tasks') ){
+      if (getTasksCountByUserId(this.userId) > 9 && !checkUserPayment(chargeId, 'tasks') ){
         throw new Meteor.Error('Invalid payment');
       }
 
       setLastUserActive(this.userId);
 
-      setPaymentUsed(chargeId,true);
+      setPaymentUsed(chargeId, true);
 
       Tasks.insert({
         text,
@@ -219,14 +219,14 @@ if (Meteor.isServer) {
           }
         }
       };
-      return new Promise( (resolve, reject) => {
+      return new Promise((resolve, reject) => {
         HTTP.post('https://www.googleapis.com/calendar/v3/calendars/primary/events', dataObject, (error, result) => {
           if (error) {
             Tasks.update(taskId, { $set: { disabled: false } });
             reject(error);
           }
           if (result) {
-            setPaymentUsed(chargeId,true);
+            setPaymentUsed(chargeId, true);
             setLastUserActive(this.userId);
 
             Tasks.update(taskId, { $set: { googleEventId: result.data.id, disabled: false } });
@@ -254,11 +254,11 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Access denied');
       }
 
-      if (!checkUserPayment(chargeId, 'image') ){
+      if (!checkUserPayment(chargeId, 'image')){
         throw new Meteor.Error('Invalid payment');
       }
 
-      setPaymentUsed(chargeId,true);
+      setPaymentUsed(chargeId, true);
 
       fileName = `f${(+new Date).toString(16)}` + fileName;
 
@@ -328,7 +328,7 @@ if (Meteor.isServer) {
         },
       };
 
-      return new Promise( (resolve, reject) => {
+      return new Promise((resolve, reject) => {
         HTTP.del('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.googleEventId, dataObject, (error, result) => {
           Tasks.update(taskId, {
             $unset: { googleEventId: "" },

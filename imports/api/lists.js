@@ -8,7 +8,7 @@ import { setPaymentUsed } from './payments';
 
 export const Lists = new Mongo.Collection('lists');
 
-const getListsCountByUser = userId => {
+const getListsCountByUserId = userId => {
   return Lists.find({
     owner: userId
   }).count();
@@ -57,7 +57,7 @@ export const hasAccessToList = ({ listId, userId, roles }) => {
 };
 
 if (Meteor.isServer) {
-  Meteor.publish('lists', function listsPublconsication() {
+  Meteor.publish('lists', ()=> {
     return Lists.find(
       {
         $or: [
@@ -86,7 +86,7 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Name can`t be empty');
       }
 
-      if (getListsCountByUser(this.userId) > 2 && !checkUserPayment(chargeId, 'list') ){
+      if (getListsCountByUserId(this.userId) > 2 && !checkUserPayment(chargeId, 'list') ){
         throw new Meteor.Error('Invalid payment');
       }
 

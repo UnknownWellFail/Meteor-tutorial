@@ -82,8 +82,6 @@ class App extends Component {
     this.setState({ taskName: '' });
   }
 
-
-
   toggleHideCompleted() {
     this.setState({
       hideCompleted: !this.state.hideCompleted,
@@ -183,11 +181,11 @@ class App extends Component {
 
         <AccountsUIWrapper />
         {this.state.payment ?
-          <StripeProvider apiKey="pk_test_gDpCMiRgV1virIAIqFFE9gOd">
+          <StripeProvider apiKey={Meteor.settings.public.stripe_public_key}>
             <div className="example">
               <Elements>
-                <CheckoutForm 
-                  handle={this.state.function} 
+                <CheckoutForm
+                  handle={this.state.function}
                   hide={this.hidePayment.bind(this)}
                   userName={this.props.currentUser.username}
                   itemName={this.state.itemName}
