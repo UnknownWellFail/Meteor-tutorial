@@ -24,14 +24,13 @@ class TaskList extends Component {
       alert('List name can`t be empty');
     }
     else {
-      Meteor.call('lists.create', text, '', (error ,response) => {
-        if (error && error.message.includes('Invalid payment') ) {
-          const func = chargeId => {
-            Meteor.call('lists.create', text, chargeId);
-          };
-          this.props.showPaymentForm(func,'list');
-        }
-      });
+      if(this.props.listCount >= Meteor.settings.public.freeLists) {
+        this.props.showPaymentForm(chargeId => {
+          Meteor.call('lists.create', text, chargeId);
+        });
+      }else {
+        Meteor.call('lists.create', text, '');
+      }
       mixpanel.track("TASK_LIST_WAS_CREATED", { listName: text });
     }
 

@@ -33,7 +33,7 @@ class App extends Component {
   }
 
   showPaymentForm(func, itemName) {
-    this.handleSubmit = func;
+    this.handleSubmitPayment = func;
     this.setState({
       payment: true,
       itemName: itemName
@@ -66,15 +66,15 @@ class App extends Component {
     }
 
     if (sendInsert) {
-      mixpanel.track('TASK_WAS_CREATED',{ task:this.props.task });
-      Meteor.call('tasks.insert', text, this.listId, '', (error, response) => {
-        if (error && error.message.includes('Invalid payment') ) {
-          const func = chargeId => {
-            Meteor.call('tasks.insert', text, this.listId, chargeId);
-          };
-          this.showPaymentForm(func,'tasks');
-        }
-      });
+      mixpanel.track('TASK_WAS_CREATED', { task:this.props.task });
+
+      if (this.props.userTasksCount >= Meteor.settings.public.freeTasks) {
+        this.showPaymentForm(chargeId => {
+          Meteor.call('tasks.insert', text, this.listId, chargeId);
+        }, 'tasks');
+      } else {
+        Meteor.call('tasks.insert', text, this.listId, '');
+      }
     }
 
     // Clear form
@@ -154,6 +154,12 @@ class App extends Component {
     });
     options.unshift(<option key="-1" data-key="-1">All tasks</option>);
 
+    let freeTasks = Meteor.settings.public.freeTasks - this.props.userTasksCount;
+
+    if(freeTasks < 0) {
+      freeTasks = 0;
+    }
+
     return (
       <div className="container">
         <TaskList
@@ -165,6 +171,7 @@ class App extends Component {
         />
         <header>
           <h1>Todo List ({this.props.incompleteCount})</h1>
+          <h2>Free tasks: {freeTasks}</h2>
         </header>
 
         <label className="hide-completed">
@@ -183,7 +190,7 @@ class App extends Component {
             <div className="example">
               <Elements>
                 <CheckoutForm
-                  handle={this.handleSubmit}
+                  handle={this.handleSubmitPayment}
                   hide={this.hidePayment.bind(this)}
                   userName={this.props.currentUser.username}
                   itemName={this.state.itemName}
@@ -222,9 +229,14 @@ export default withTracker( () => {
   Meteor.subscribe('lists');
   Meteor.subscribe('tasks');
 
+  let userId;
+  if(Meteor.user()){
+    userId = Meteor.user()._id;
+  }
   return {
     lists: Lists.find().fetch(),
     tasks: Tasks.find({}, { sort: { createdAt: -1 } }).fetch(),
+    userTasksCount: Tasks.find({ owner: userId }).count(),
     incompleteCount: Tasks.find({ checked: { $ne: true } }).count(),
     currentUser: Meteor.user(),
   };
