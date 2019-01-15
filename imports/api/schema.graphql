@@ -1,0 +1,56 @@
+type User {
+  _id: ID!
+  createdAt: String
+  username: String!
+  lastActiveAt: String
+}
+
+type List {
+  _id: ID!
+  name: String!
+  ownerId: ID!
+  owner: User
+  createdAt: String
+}
+
+type Task {
+  _id: ID!
+  text: String!
+  createdAt: String
+  owner: String!
+  username: String!
+  private: Boolean
+  listId: ID
+  list: List
+}
+
+type Query {
+  me: User!
+  user(_id: ID!): User!
+
+  lists: [List]!
+  list(_id: ID!): List!
+
+  tasks(listId: ID): [Task]!
+  task(_id: ID!): Task!
+}
+
+type Mutation {
+  createTask(task: TaskInput!): Task!
+  deleteTask(_id: ID!): Task!
+
+  createList(name: String!): List!
+  deleteList(_id: ID!): List!
+}
+
+input TaskInput {
+  text: String!
+  listId: String  
+}
+
+type Subscription {
+  taskAdded: Task
+  taskDeleted: Task
+  listAdded: List
+  listDeleted: List
+}

@@ -2,13 +2,16 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import { Elements, StripeProvider } from 'react-stripe-elements';
 
+import CheckoutForm from './CheckoutForm';
 import { Tasks } from '../api/tasks.js';
 import Task from './Task.js';
 import TaskList from './TaskList.js';
 import AccountsUIWrapper from './AccountsUIWrapper.js';
 import { Lists } from '../api/lists.js';
 import { findDate } from '../api/dueDates.js';
+
 
 // App component - represents the whole app1
 class App extends Component {
@@ -17,6 +20,8 @@ class App extends Component {
     this.state = {
       hideCompleted: false,
       taskName: '',
+      payment: false,
+      itemName: ''
     };
     this.listId = -1;
   }
@@ -24,6 +29,14 @@ class App extends Component {
   handleChangeTaskText(event) {
     this.setState({
       taskName: event.target.value
+    });
+  }
+
+  showPaymentForm(func, itemName) {
+    this.handleSubmitPayment = func;
+    this.setState({
+      payment: true,
+      itemName: itemName
     });
   }
 
@@ -53,9 +66,17 @@ class App extends Component {
     }
 
     if (sendInsert) {
-      mixpanel.track('TASK_WAS_CREATED',{ task:this.props.task });
-      Meteor.call('tasks.insert', text, this.listId);
+      mixpanel.track('TASK_WAS_CREATED', { task:this.props.task });
+
+      if (this.props.userTasksCount >= Meteor.settings.public.freeTasks) {
+        this.showPaymentForm(chargeId => {
+          Meteor.call('tasks.insert', text, this.listId, chargeId);
+        }, 'tasks');
+      } else {
+        Meteor.call('tasks.insert', text, this.listId, '');
+      }
     }
+
     // Clear form
     this.setState({ taskName: '' });
   }
@@ -63,6 +84,12 @@ class App extends Component {
   toggleHideCompleted() {
     this.setState({
       hideCompleted: !this.state.hideCompleted,
+    });
+  }
+
+  hidePayment() {
+    this.setState({
+      payment: false
     });
   }
 
@@ -95,6 +122,7 @@ class App extends Component {
         userAuthorised={user}
         googleUser={googleUser}
         listName={listName}
+        showPaymentForm={this.showPaymentForm.bind(this)}
       />);
     });
   }
@@ -126,6 +154,12 @@ class App extends Component {
     });
     options.unshift(<option key="-1" data-key="-1">All tasks</option>);
 
+    let freeTasks = Meteor.settings.public.freeTasks - this.props.userTasksCount;
+
+    if(freeTasks < 0) {
+      freeTasks = 0;
+    }
+
     return (
       <div className="container">
         <TaskList
@@ -133,9 +167,11 @@ class App extends Component {
           currentUser={this.props.currentUser}
           setListId={this.setListId.bind(this)}
           listId={this.listId}
+          showPaymentForm={this.showPaymentForm.bind(this)}
         />
         <header>
           <h1>Todo List ({this.props.incompleteCount})</h1>
+          <h2>Free tasks: {freeTasks}</h2>
         </header>
 
         <label className="hide-completed">
@@ -149,6 +185,20 @@ class App extends Component {
         </label>
 
         <AccountsUIWrapper />
+        {this.state.payment ?
+          <StripeProvider apiKey={Meteor.settings.public.stripe_public_key}>
+            <div className="example">
+              <Elements>
+                <CheckoutForm
+                  handle={this.handleSubmitPayment}
+                  hide={this.hidePayment.bind(this)}
+                  userName={this.props.currentUser.username}
+                  itemName={this.state.itemName}
+                />
+              </Elements>
+            </div>
+          </StripeProvider>
+          : ''}
 
         {this.props.currentUser ?
           <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
@@ -179,9 +229,14 @@ export default withTracker( () => {
   Meteor.subscribe('lists');
   Meteor.subscribe('tasks');
 
+  let userId;
+  if(Meteor.user()){
+    userId = Meteor.user()._id;
+  }
   return {
     lists: Lists.find().fetch(),
     tasks: Tasks.find({}, { sort: { createdAt: -1 } }).fetch(),
+    userTasksCount: Tasks.find({ owner: userId }).count(),
     incompleteCount: Tasks.find({ checked: { $ne: true } }).count(),
     currentUser: Meteor.user(),
   };

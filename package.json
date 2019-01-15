@@ -2,24 +2,31 @@
   "name": "simple-todos",
   "private": true,
   "scripts": {
-    "start": "meteor run",
+    "start": "meteor run --settings settings-local.json",
     "test": "meteor test --once --driver-package meteortesting:mocha",
     "test-app": "TEST_WATCH=1 meteor test --full-app --driver-package meteortesting:mocha",
     "visualize": "meteor --production --extra-packages bundle-visualizer"
   },
   "dependencies": {
     "@babel/runtime": "^7.0.0",
+    "apollo-server": "^2.3.1",
     "aws-sdk": "^2.376.0",
     "bcrypt": "^3.0.2",
     "classnames": "^2.2.6",
     "cron": "^1.6.0",
     "dotenv": "^6.2.0",
     "eslint": "^5.10.0",
+    "graphql": "^14.0.2",
+    "graphql-config": "^2.2.1",
+    "graphql-subscriptions": "^1.0.0",
+    "graphql-tools": "^4.0.3",
     "lodash": "^4.17.11",
     "meteor-node-stubs": "^0.4.1",
     "react": "^16.6.3",
     "react-addons-css-transition-group": "^15.6.2",
-    "react-dom": "^16.6.3"
+    "react-dom": "^16.6.3",
+    "react-stripe-elements": "^2.0.1",
+    "stripe": "^6.20.0"
   },
   "meteor": {
     "mainModule": {

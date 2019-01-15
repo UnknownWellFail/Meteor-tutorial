@@ -3,11 +3,12 @@ import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 import { HTTP } from 'meteor/http';
 
-import { findDate } from './dueDates';
 import { hasAccessToList } from './lists';
 import { getS3 } from './aws-conf';
 import { getTodayDate, setLastUserActive, getUrlParams } from '../utils/';
-
+import { checkUserPayment } from './payments';
+import { setPaymentUsed } from './payments';
+import { insertTask, deleteTask }  from './functions/';
 
 export const Tasks = new Mongo.Collection('tasks');
 
@@ -21,8 +22,14 @@ export const getTodayTasks = userId => {
   ).fetch();
 };
 
+export const getTasksCountByUserId = userId => {
+  return Tasks.find({
+    owner: userId
+  }).count();
+};
+
 if (Meteor.isServer) {
-  Meteor.publish('tasks', function tasksPublconsication() {
+  Meteor.publish('tasks', function() {
     return Tasks.find(
       {
         $or: [
@@ -39,73 +46,17 @@ if (Meteor.isServer) {
   });
 
   Meteor.methods({
-    'tasks.insert'(text, listId) {
+    'tasks.insert'(text, listId, chargeId) {
       check(text, String);
       check(listId, String);
+      check(chargeId, String);
 
-      // Make sure the user is logged in before inserting a task
-      if (!this.userId) {
-        throw new Meteor.Error('Access denied');
-      }
-
-      if (text === '') {
-        throw new Meteor.Error('Text is empty');
-      }
-
-      const dueDate = findDate(text);
-
-      if (dueDate !== null && dueDate.text === '') {
-        throw new Meteor.Error('Text is empty');
-      }
-
-      if (listId !== '-1' && !hasAccessToList({ listId, userId: this.userId, roles: ['admin'] }) ) {
-        throw new Meteor.Error('Access denied');
-      }
-      setLastUserActive(this.userId);
-
-      Tasks.insert({
-        text,
-        createdAt: new Date(),
-        owner: this.userId,
-        username: Meteor.users.findOne(this.userId).username,
-        private: false,
-        dueDate: dueDate && { start: dueDate.date.start, end: dueDate.date.end },
-        listId: listId === '-1' ? null : listId
-      });
-    },
-    'tasks.remove.list'(listId) {
-      check(listId, String);
-      setLastUserActive(this.userId);
-      Tasks.remove({
-        listId: listId
-      });
+      insertTask({ text, userId: this.userId, listId, chargeId });
     },
     'tasks.remove'(taskId) {
       check(taskId, String);
 
-      if (!this.userId) {
-        throw new Meteor.Error('Access denied');
-      }
-
-      const task = Tasks.findOne(taskId);
-
-      if (!task) {
-        throw new Meteor.Error('Task not found');
-      }
-
-      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
-        throw new Meteor.Error('Access denied');
-      }
-
-      setLastUserActive(this.userId);
-
-      Tasks.remove({
-        _id: taskId,
-        $or: [
-          { private: { $ne: true } },
-          { owner: this.userId },
-        ]
-      });
+      deleteTask({ userId: this.userId, taskId });
     },
     'tasks.setChecked'(taskId, isChecked) {
       check(taskId, String);
@@ -156,8 +107,9 @@ if (Meteor.isServer) {
 
       Tasks.update(taskId, { $set: { private: isPrivate } });
     },
-    'tasks.addToGoogleCalendar'(taskId) {
+    'tasks.addToGoogleCalendar'(taskId, chargeId) {
       check(taskId, String);
+      check(chargeId, String);
 
       const task = Tasks.findOne(taskId);
 
@@ -180,6 +132,10 @@ if (Meteor.isServer) {
 
       if (!user.services || !user.services.google) {
         throw new Meteor.Error('Only google authorized');
+      }
+
+      if (!checkUserPayment(chargeId, 'calendar') ){
+        throw new Meteor.Error('Invalid payment');
       }
 
       Tasks.update(taskId, { $set: { disabled: true } });
@@ -206,6 +162,7 @@ if (Meteor.isServer) {
             reject(error);
           }
           if (result) {
+            setPaymentUsed(chargeId, true);
             setLastUserActive(this.userId);
 
             Tasks.update(taskId, { $set: { googleEventId: result.data.id, disabled: false } });
@@ -214,10 +171,11 @@ if (Meteor.isServer) {
         });
       });
     },
-    'tasks.addImage'(taskId, fileName, fileData) {
+    'tasks.addImage'(taskId, fileName, fileData, chargeId) {
       check(taskId, String);
       check(fileName, String);
       check(fileData, String);
+      check(chargeId, String);
 
       if (!this.userId) {
         throw new Meteor.Error('Access denied');
@@ -231,6 +189,13 @@ if (Meteor.isServer) {
       if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
         throw new Meteor.Error('Access denied');
       }
+
+      if (!checkUserPayment(chargeId, 'image')){
+        throw new Meteor.Error('Invalid payment');
+      }
+
+      setPaymentUsed(chargeId, true);
+
       fileName = `f${(+new Date).toString(16)}` + fileName;
 
       const base64data = new Buffer(fileData, 'binary');

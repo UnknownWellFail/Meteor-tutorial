@@ -1,0 +1,31 @@
+{
+  "cron_period": "00 00 21 * * *",
+  "public": {
+    "stripe_public_key": "pk_test_gDpCMiRgV1virIAIqFFE9gOd",
+    "freeTasks": 9,
+    "freeLists": 3
+  },
+  "currency": "usd",
+  "items" : {
+    "tasks" : {
+      "name": "Task",
+      "amount": 100,
+      "description": "something"
+    },
+    "list" : {
+      "name": "List",
+      "amount": 1000,
+      "description": "something"
+    },
+    "calendar" : {
+      "name": "Calendar",
+      "amount": 50,
+      "description": "something"
+    },
+    "image" : {
+      "name": "Image",
+      "amount": 75,
+      "description": "something"
+    }
+  }
+}
