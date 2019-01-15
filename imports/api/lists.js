@@ -5,10 +5,12 @@ import { check } from 'meteor/check';
 import { getFullDay } from '../utils';
 import { checkUserPayment } from './payments';
 import { setPaymentUsed } from './payments';
+import createList from './functions/createList';
+import deleteList from './functions/deleteList';
 
 export const Lists = new Mongo.Collection('lists');
 
-const getListsCountByUserId = userId => {
+export const getListsCountByUserId = userId => {
   return Lists.find({
     owner: userId
   }).count();
@@ -57,7 +59,7 @@ export const hasAccessToList = ({ listId, userId, roles }) => {
 };
 
 if (Meteor.isServer) {
-  Meteor.publish('lists', () => {
+  Meteor.publish('lists', function() {
     return Lists.find(
       {
         $or: [
@@ -78,45 +80,13 @@ if (Meteor.isServer) {
       check(name, String);
       check(chargeId, String);
 
-      if (!this.userId) {
-        throw new Meteor.Error('Not authorized');
-      }
-
-      if (name === '') {
-        throw new Meteor.Error('Name can`t be empty');
-      }
-
-      if (getListsCountByUserId(this.userId) > 2 && !checkUserPayment(chargeId, 'list')){
-        throw new Meteor.Error('Invalid payment');
-      }
-
-      setPaymentUsed(chargeId, true);
-
-      Lists.insert({
-        name,
-        owner: this.userId,
-        createdAt: new Date(),
-        username: Meteor.users.findOne(this.userId).username,
-      });
-
+      createList({ name, userId: this.userId, chargeId });
     },
 
     'lists.delete'(listId) {
       check(listId, String);
 
-      if (!this.userId) {
-        throw new Meteor.Error('Not authorized');
-      }
-
-      if (Lists.find({ owner: this.userId }).count() !== 1) {
-        throw new Meteor.Error('You can`t remove your last list');
-      }
-
-      Lists.remove({
-        _id: listId,
-        owner: this.userId
-      });
-      Meteor.call('tasks.remove.list', listId);
+      deleteList({ userId: this.userId, listId });
     },
 
     'lists.update'(listId, name) {

@@ -56,12 +56,20 @@ if (Meteor.isServer) {
         throw new Meteor.Error('Item not found');
       }
 
-      const charge = await stripe.charges.create({
+      const customerId =  Meteor.users.findOne(this.userId).customerId;
+
+      const data = {
         amount: item.amount,
         currency: Meteor.settings.currency,
         description: item.description,
         source: token,
-      });
+      };
+
+      if(!token.startsWith('tok')){
+        data.customer = customerId;
+      }
+
+      const charge = await stripe.charges.create(data);
 
       if(charge){
         Payments.insert({
@@ -75,5 +83,39 @@ if (Meteor.isServer) {
 
       return charge;
     },
+    'addCard' (token) {
+      check(token, String);
+
+      if (!this.userId) {
+        throw new Meteor.Error('Access denied');
+      }
+
+      const customerId = Meteor.users.findOne(this.userId).customerId;
+
+      if(!customerId) {
+        throw new Meteor.Error('Customer not found');
+      }
+
+      const source = stripe.customers.createSource(
+        customerId,
+        { source: token }
+      );
+
+      return source;
+    },
+    'getCards' (){
+      if (!this.userId) {
+        throw new Meteor.Error('Access denied');
+      }
+
+      const customerId = Meteor.users.findOne(this.userId).customerId;
+
+      if(!customerId) {
+        throw new Meteor.Error('Customer not found');
+      }
+
+      return stripe.customers.listCards(customerId);
+    },
+
   });
 }

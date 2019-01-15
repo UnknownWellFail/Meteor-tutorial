@@ -3,12 +3,13 @@ import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 import { HTTP } from 'meteor/http';
 
-import { findDate } from './dueDates';
 import { hasAccessToList } from './lists';
 import { getS3 } from './aws-conf';
 import { getTodayDate, setLastUserActive, getUrlParams } from '../utils/';
 import { checkUserPayment } from './payments';
 import { setPaymentUsed } from './payments';
+import insertTask from './functions/insertTask';
+import deleteTask from './functions/deleteTask';
 
 export const Tasks = new Mongo.Collection('tasks');
 
@@ -22,14 +23,14 @@ export const getTodayTasks = userId => {
   ).fetch();
 };
 
-const getTasksCountByUserId = userId => {
+export const getTasksCountByUserId = userId => {
   return Tasks.find({
     owner: userId
   }).count();
 };
 
 if (Meteor.isServer) {
-  Meteor.publish('tasks', () => {
+  Meteor.publish('tasks', function() {
     return Tasks.find(
       {
         $or: [
@@ -51,76 +52,12 @@ if (Meteor.isServer) {
       check(listId, String);
       check(chargeId, String);
 
-      // Make sure the user is logged in before inserting a task
-      if (!this.userId) {
-        throw new Meteor.Error('Access denied');
-      }
-
-      if (text === '') {
-        throw new Meteor.Error('Text is empty');
-      }
-
-      const dueDate = findDate(text);
-
-      if (dueDate !== null && dueDate.text === '') {
-        throw new Meteor.Error('Text is empty');
-      }
-
-      if (listId !== '-1' && !hasAccessToList({ listId, userId: this.userId, roles: ['admin'] }) ) {
-        throw new Meteor.Error('Access denied');
-      }
-
-      if (getTasksCountByUserId(this.userId) > 9 && !checkUserPayment(chargeId, 'tasks') ){
-        throw new Meteor.Error('Invalid payment');
-      }
-
-      setLastUserActive(this.userId);
-
-      setPaymentUsed(chargeId, true);
-
-      Tasks.insert({
-        text,
-        createdAt: new Date(),
-        owner: this.userId,
-        username: Meteor.users.findOne(this.userId).username,
-        private: false,
-        dueDate: dueDate && { start: dueDate.date.start, end: dueDate.date.end },
-        listId: listId === '-1' ? null : listId
-      });
-    },
-    'tasks.remove.list'(listId) {
-      check(listId, String);
-      setLastUserActive(this.userId);
-      Tasks.remove({
-        listId: listId
-      });
+      insertTask({ text, userId: this.userId, listId, chargeId });
     },
     'tasks.remove'(taskId) {
       check(taskId, String);
 
-      if (!this.userId) {
-        throw new Meteor.Error('Access denied');
-      }
-
-      const task = Tasks.findOne(taskId);
-
-      if (!task) {
-        throw new Meteor.Error('Task not found');
-      }
-
-      if (!hasAccessToList({ listId: task.listId, userId: this.userId, roles: ['admin'] }) ) {
-        throw new Meteor.Error('Access denied');
-      }
-
-      setLastUserActive(this.userId);
-
-      Tasks.remove({
-        _id: taskId,
-        $or: [
-          { private: { $ne: true } },
-          { owner: this.userId },
-        ]
-      });
+      deleteTask({ userId: this.userId, taskId });
     },
     'tasks.setChecked'(taskId, isChecked) {
       check(taskId, String);
