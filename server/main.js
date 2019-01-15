@@ -10,6 +10,7 @@ import '../imports/api/payments.js';
 import { Lists } from '../imports/api/lists.js';
 import { addStatCron } from '../imports/api/helpers/stat-cron';
 import { setS3 } from '../imports/api/aws-conf';
+import './api/index.js';
 
 dotenv.config({ path: process.env.PWD + "/.env" });
 
@@ -20,6 +21,14 @@ aws.config.update({
 });
 
 export const stripe = Stripe(process.env.STRIPE_PRIVATE_KEY);
+
+const createCustomer = async ({ userId, username, email }) => {
+  const customer = await stripe.customers.create({
+    description: username,
+    email
+  });
+  Meteor.users.update(userId, { $set: { customerId: customer.id } });
+};
 
 
 Meteor.startup( () => {
@@ -33,6 +42,8 @@ if (Meteor.isServer) {
       user.username = user.services.google.email;
       user.emails = user.services.google.email;
     }
+    createCustomer({ userId: user._id, username: user.username, email: user.emails });
+
     Lists.insert({
       name: 'My Tasks',
       owner: user._id,
