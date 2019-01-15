@@ -8,8 +8,7 @@ import { getS3 } from './aws-conf';
 import { getTodayDate, setLastUserActive, getUrlParams } from '../utils/';
 import { checkUserPayment } from './payments';
 import { setPaymentUsed } from './payments';
-import insertTask from './functions/insertTask';
-import deleteTask from './functions/deleteTask';
+import { insertTask, deleteTask }  from './functions/';
 
 export const Tasks = new Mongo.Collection('tasks');
 

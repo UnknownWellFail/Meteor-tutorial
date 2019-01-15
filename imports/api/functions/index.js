@@ -1,4 +1,4 @@
-export { default as insertTask } from './insertTask';
-export { default as createList } from './createList';
-export { default as deleteList } from './deleteList';
-export { default as deleteTask } from './deleteTask';
+export { default as insertTask } from './create-task';
+export { default as createList } from './create-list';
+export { default as deleteList } from './delete-list';
+export { default as deleteTask } from './delete-task';

@@ -65,7 +65,7 @@ if (Meteor.isServer) {
         source: token,
       };
 
-      if(!token.startsWith('tok')){
+      if(!token.startsWith('tok') ){
         data.customer = customerId;
       }
 

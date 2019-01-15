@@ -13,7 +13,7 @@ const server = new ApolloServer({
   schema,
   context: async ({ req }) => ({
     user: await getUser(req.headers.authorization)
-  })
+  }),
 });
 
 server.applyMiddleware({
@@ -30,7 +30,13 @@ WebApp.connectHandlers.use('/api/graphql', (req, res) => {
 new SubscriptionServer({
   execute,
   subscribe,
-  schema
+  schema,
+  onConnect: async (connectionParams, webSocket) => {
+    if(connectionParams.authorization){
+      return { user: await getUser(connectionParams.authorization) };
+    }
+    throw new Error('Missing auth token!');
+  },
 }, {
   server: WebApp.httpServer,
   path: '/api/subscriptions'

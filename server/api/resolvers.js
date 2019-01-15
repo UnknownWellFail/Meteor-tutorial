@@ -7,7 +7,25 @@ import { insertTask, deleteTask, createList, deleteList } from '../../imports/ap
 
 const pubsub = new PubSub();
 
+const reduceList = newList => {
+  if(!newList) {
+    return null;
+  }
+  return { _id: newList._id, name: newList.name,
+    ownerId: newList.owner, owner: Meteor.users.findOne(newList.owner), createdAt: newList.createdAt };
+};
+
 const resolver = {
+  List: {
+    owner: root => {
+      return Meteor.users.findOne(root.owner);
+    }
+  },
+  Task: {
+    list: root => {
+      return reduceList(Lists.findOne(root.listId));
+    }
+  },
   Query: {
     me: (_, __, context) => {
       if(!context.user) {
@@ -25,25 +43,53 @@ const resolver = {
       if(!context.user) {
         throw new ForbiddenError('Access denied');
       }
-      return Lists.find().fetch();
+      let lists = Lists.find({
+        $or: [
+          /* eslint-disable*/
+          {
+            owner: context.user._id
+          },
+          {
+            'users._id': context.user._id
+          }],
+          /* eslint-enable  */
+      }).fetch();
+      lists = lists.map(list => {
+        return reduceList(list);
+      });
+      return lists;
     },
     list: async (_, { _id }, context) => {
       if(!context.user) {
         throw new ForbiddenError('Access denied');
       }
-      return Lists.findOne(_id);
+      return reduceList(Lists.findOne(_id) );
     },
-    tasks: (_, __, context) => {
+    tasks: (_, { listId }, context) => {
       if(!context.user) {
         throw new ForbiddenError('Access denied');
       }
-      return Tasks.find().fetch();
+      const tasks =  Tasks.find({
+        $or: [
+          /* eslint-disable*/
+          {
+            private: { $ne: true }
+          },
+          {
+            owner: context.user._id
+          }]
+        /* eslint-enable */
+      }).fetch();
+      if (listId) {
+        return tasks.filter(task => task.listId === listId);
+      }
+      return tasks;
     },
     task: (_, { _id }, context) => {
       if(!context.user) {
         throw new ForbiddenError('Access denied');
       }
-      return Tasks.findOne(_id);
+      return Tasks.findOne({ $and: [ { _id }, { owner: context.user._id }] });
     },
   },
   Mutation: {
@@ -73,7 +119,7 @@ const resolver = {
       const createdList = createList({ name, userId: context.user._id });
       const newList = Lists.findOne(createdList);
       pubsub.publish('listAdded', { listAdded: newList, userId: context.user._id });
-      return newList;
+      return reduceList(newList);
     },
     deleteList: (_, { _id }, context) => {
       if(!context.user) {
@@ -82,28 +128,40 @@ const resolver = {
       const list = Lists.findOne(_id);
       deleteList({ userId: context.user._id, listId: _id });
       pubsub.publish('listDeleted', { listDeleted: list, userId: context.user._id });
-      return list;
+      return reduceList(list);
     },
   },
   Subscription: {
     taskAdded: {
-      subscribe: withFilter( () => pubsub.asyncIterator('taskAdded'), (payload, variables) => {
-        return payload.taskAdded.owner === variables.userId;
+      subscribe: withFilter( () => pubsub.asyncIterator('taskAdded'), (payload, variables, context) => {
+        if(!context.user) {
+          throw new Error('Access denied');
+        }
+        return payload.taskAdded.owner === context.user._id;
       }),
     },
     taskDeleted: {
-      subscribe: withFilter( () => pubsub.asyncIterator('taskDeleted'), (payload, variables) => {
-        return payload.taskDeleted.owner === variables.userId;
+      subscribe: withFilter( () => pubsub.asyncIterator('taskDeleted'), (payload, variables, context) => {
+        if(!context.user) {
+          throw new Error('Access denied');
+        }
+        return payload.taskDeleted.owner === context.user._id;
       }),
     },
     listAdded: {
-      subscribe: withFilter( () => pubsub.asyncIterator('listAdded'), (payload, variables) => {
-        return payload.listAdded.owner === variables.userId;
+      subscribe: withFilter( () => pubsub.asyncIterator('listAdded'), (payload, variables, context) => {
+        if(!context.user) {
+          throw new Error('Access denied');
+        }
+        return payload.listAdded.owner === context.user._id;
       }),
     },
     listDeleted: {
-      subscribe: withFilter( () => pubsub.asyncIterator('listDeleted'), (payload, variables) => {
-        return payload.listDeleted.owner === variables.userId;
+      subscribe: withFilter( () => pubsub.asyncIterator('listDeleted'), (payload, variables, context) => {
+        if(!context.user) {
+          throw new Error('Access denied');
+        }
+        return payload.listDeleted.owner === context.user._id;
       }),
     }
   }

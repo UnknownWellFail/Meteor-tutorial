@@ -3,10 +3,7 @@ import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
 import { getFullDay } from '../utils';
-import { checkUserPayment } from './payments';
-import { setPaymentUsed } from './payments';
-import createList from './functions/createList';
-import deleteList from './functions/deleteList';
+import { createList, deleteList } from './functions/';
 
 export const Lists = new Mongo.Collection('lists');
 

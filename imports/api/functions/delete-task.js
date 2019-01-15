@@ -1,6 +1,6 @@
 import { Tasks } from '../tasks';
 import { hasAccessToList } from '../lists';
-import { setLastUserActive } from '../../utils/';
+import { setLastUserActive } from '../../utils';
 
 const deleteTask = ({ userId, taskId }) => {
   if (!userId) {

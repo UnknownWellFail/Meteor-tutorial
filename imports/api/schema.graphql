@@ -1,16 +1,16 @@
 type User {
   _id: ID!
-  createdAt: String,
-  username: String!,
-  customerId: String,
+  createdAt: String
+  username: String!
   lastActiveAt: String
 }
 
 type List {
   _id: ID!
   name: String!
-  owner: String!
-  username: String!
+  ownerId: ID!
+  owner: User
+  createdAt: String
 }
 
 type Task {
@@ -20,7 +20,8 @@ type Task {
   owner: String!
   username: String!
   private: Boolean
-  listId: String
+  listId: ID
+  list: List
 }
 
 type Query {
@@ -30,7 +31,7 @@ type Query {
   lists: [List]!
   list(_id: ID!): List!
 
-  tasks: [Task]!
+  tasks(listId: ID): [Task]!
   task(_id: ID!): Task!
 }
 
@@ -48,8 +49,8 @@ input TaskInput {
 }
 
 type Subscription {
-  taskAdded(userId: ID!): Task
-  taskDeleted(userId: ID!): Task
-  listAdded(userId: ID!): List
-  listDeleted(userId: ID!): List
+  taskAdded: Task
+  taskDeleted: Task
+  listAdded: List
+  listDeleted: List
 }
